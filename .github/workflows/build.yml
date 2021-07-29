@@ -1,0 +1,74 @@
+name: Docker Image Build
+on:
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: Import GPG Key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          git-user-signingkey: true
+          git-commit-gpgsign: true
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+        
+      - name: Clone
+        run: git clone https://github.com/Tsuk1ko/cq-picsearcher-bot
+      
+      - name: Check Tsuk1ko/cq-picsearcher-bot ver
+        id: checker
+        run: |
+          latestCommit=$(cd ./cq-picsearcher-bot && git log -1 --pretty=format:"%H")
+          lastCommit=$(cat ./version || echo "NULL")
+          if [ ${latestCommit} = ${lastCommit} ]; \
+          then \
+          echo "::set-output name=ifUpdated::false"; \
+          else echo "::set-output name=ifUpdated::true" && echo "${latestCommit}" > ./version; \
+          fi
+        
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        with:
+          push: true
+          tags: silicer/cq-picsearcher-bot:latest
+    
+      - name: Post build and push
+        run: |
+          rm -rf ./cq-picsearcher-bot
+          
+      - name: commit
+        run: |
+          git config --global user.email ${{ secrets.mail }}
+          git config --global user.name ${{ secrets.username }}
+          git add .
+          tIme=$(env TZ=Asia/Shanghai date "+%Y-%m-%d %H:%M:%S")
+          git commit -S -m "Updated at ${tIme} UTC+8" -a
+
+      - name: Push changes
+        if: ${{ success() }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.token }}
+          branch: release
