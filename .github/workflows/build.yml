@@ -59,6 +59,7 @@ jobs:
           rm -rf ./cq-picsearcher-bot
           
       - name: commit
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           git config --global user.email ${{ secrets.mail }}
           git config --global user.name ${{ secrets.username }}
@@ -67,8 +68,8 @@ jobs:
           git commit -S -m "Updated at ${tIme} UTC+8" -a
 
       - name: Push changes
-        if: ${{ success() }}
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.token }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: release
