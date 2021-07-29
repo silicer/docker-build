@@ -9,7 +9,7 @@ RUN apk add --no-cache --update tzdata && \
 # 安装依赖
 RUN apk add --update --no-cache build-base g++ cairo-dev jpeg-dev pango-dev giflib-dev
 
-COPY ./cq-picsearcher-bot/ /cq-picsearcher-bot/
+COPY cq-picsearcher-bot /
 WORKDIR /cq-picsearcher-bot
 
 RUN yarn
