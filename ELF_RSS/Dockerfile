@@ -2,7 +2,7 @@ FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8-alpine3.10
 
 # RUN python3 -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple
 
-RUN apk add --no-cache --update tzdata && \
+RUN apk add --no-cache --update tzdata libxml2 libxslt && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
     apk del tzdata
