@@ -11,8 +11,8 @@ COPY ELF_RSS /app
 
 WORKDIR /app
 
-RUN python3 -m pip install -r requirements.txt && \
-    mv .env.dev .env.prod
+RUN python3 -m pip install -r requirements.txt && ls -lah && \
+    mv ./.env.dev ./.env.prod
 
 VOLUME ["/app/data", "/app/env.prod"]
 
