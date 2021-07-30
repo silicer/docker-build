@@ -58,7 +58,7 @@ jobs:
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         with:
           push: true
-          tags: silicer/ELF_RSS:latest
+          tags: silicer/elf_rss:latest
           context: ./ELF_RSS
 
       - name: Post build and push
