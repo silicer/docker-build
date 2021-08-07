@@ -53,6 +53,15 @@ jobs:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
+      - name: Set up cache
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache/cq-picsearcher-bot
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build and push
         uses: docker/build-push-action@v2
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
@@ -60,11 +69,15 @@ jobs:
           push: true
           tags: silicer/cq-picsearcher-bot:latest
           context: ./cq-picsearcher-bot
+          cache-from: type=local,src=/tmp/.buildx-cache/cq-picsearcher-bot
+          cache-to: type=local,src=/tmp/.buildx-cache/cq-picsearcher-bot-new,mode=max
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           rm -rf ./cq-picsearcher-bot/cq-picsearcher-bot
+          rm -rf /tmp/.buildx-cache/cq-picsearcher-bot
+          mv /tmp/.buildx-cache/cq-picsearcher-bot-new /tmp/.buildx-cache/cq-picsearcher-bot
 
       - name: commit
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}

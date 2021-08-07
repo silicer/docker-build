@@ -53,6 +53,15 @@ jobs:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
+      - name: Set up cache
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache/ELF_RSS
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build and push
         uses: docker/build-push-action@v2
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
@@ -60,11 +69,15 @@ jobs:
           push: true
           tags: silicer/elf_rss:latest
           context: ./ELF_RSS
+          cache-from: type=local,src=/tmp/.buildx-cache/ELF_RSS
+          cache-to: type=local,src=/tmp/.buildx-cache/ELF_RSS-new,mode=max
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           rm -rf ./ELF_RSS/ELF_RSS
+          rm -rf /tmp/.buildx-cache/ELF_RSS
+          mv /tmp/.buildx-cache/ELF_RSS-new /tmp/.buildx-cache/ELF_RSS
 
       - name: commit
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
