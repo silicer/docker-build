@@ -70,7 +70,7 @@ jobs:
           tags: silicer/cq-picsearcher-bot:latest
           context: ./cq-picsearcher-bot
           cache-from: type=local,src=/tmp/.buildx-cache/cq-picsearcher-bot
-          cache-to: type=local,src=/tmp/.buildx-cache/cq-picsearcher-bot-new,mode=max
+          cache-to: type=local,dest=/tmp/.buildx-cache/cq-picsearcher-bot-new,mode=max
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}

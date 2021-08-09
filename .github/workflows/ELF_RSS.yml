@@ -70,7 +70,7 @@ jobs:
           tags: silicer/elf_rss:latest
           context: ./ELF_RSS
           cache-from: type=local,src=/tmp/.buildx-cache/ELF_RSS
-          cache-to: type=local,src=/tmp/.buildx-cache/ELF_RSS-new,mode=max
+          cache-to: type=local,dest=/tmp/.buildx-cache/ELF_RSS-new,mode=max
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
