@@ -1,4 +1,4 @@
-name: caddy build
+name: go-cqhttp 镜像构建
 on:
   workflow_dispatch:
   schedule:
@@ -17,10 +17,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Check caddy latest release ver
+      - name: Check go-cqhttp latest release ver
         id: checker
         run: |
-          cd caddy
+          cd go-cqhttp
           latestCommit=$(curl -sSL https://api.github.com/repos/caddyserver/caddy/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
           lastCommit=$(cat ./version || echo "NULL")
           if [ ${latestCommit} = ${lastCommit} ]; \
@@ -28,6 +28,13 @@ jobs:
           echo "::set-output name=ifUpdated::false"; \
           else echo "::set-output name=ifUpdated::true" && echo "::set-output name=version::${latestCommit}" && echo "${latestCommit}" > ./version; \
           fi
+
+      - name: Download latest go-cqhttp release
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        run: |
+          cd go-cqhttp
+          curl -sSL -O https://github.com/Mrs4s/go-cqhttp/releases/latest/download/go-cqhttp_linux_amd64.tar.gz
+          tar -xzf go-cqhttp_linux_amd64.tar.gz go-cqhttp
 
       - name: Import GPG Key
         id: import_gpg
@@ -54,7 +61,7 @@ jobs:
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: actions/cache@v2
         with:
-          path: /tmp/.buildx-cache/caddy
+          path: /tmp/.buildx-cache/go-cqhttp
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
@@ -64,18 +71,19 @@ jobs:
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         with:
           push: true
-          context: ./caddy
-          cache-from: type=local,src=/tmp/.buildx-cache/caddy
-          cache-to: type=local,dest=/tmp/.buildx-cache/caddy-new,mode=max
+          context: ./go-cqhttp
+          cache-from: type=local,src=/tmp/.buildx-cache/go-cqhttp
+          cache-to: type=local,dest=/tmp/.buildx-cache/go-cqhttp-new,mode=max
           tags:
-            - silicer/caddy:latest
-            - silicer/caddy:${{ steps.checker.outputs.version }}
+            - silicer/go-cqhttp:latest
+            - silicer/go-cqhttp:${{ steps.checker.outputs.version }}
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
-          rm -rf /tmp/.buildx-cache/caddy
-          mv /tmp/.buildx-cache/caddy-new /tmp/.buildx-cache/caddy
+          rm go-cqhttp/go-cqhttp
+          rm -rf /tmp/.buildx-cache/go-cqhttp
+          mv /tmp/.buildx-cache/go-cqhttp-new /tmp/.buildx-cache/go-cqhttp
 
       - name: commit
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
@@ -84,7 +92,7 @@ jobs:
           git config --global user.name ${{ secrets.username }}
           git add .
           tIme=$(env TZ=Asia/Shanghai date "+%Y-%m-%d %H:%M:%S")
-          git commit -S -m "Caddy built and updated at ${tIme} UTC+8" -a
+          git commit -S -m "go-cqhttp built and updated at ${tIme} UTC+8" -a
 
       - name: Push changes
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
