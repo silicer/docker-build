@@ -21,7 +21,7 @@ jobs:
         id: checker
         run: |
           cd go-cqhttp
-          latestCommit=$(curl -sSL https://api.github.com/repos/caddyserver/caddy/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          latestCommit=$(curl -sSL https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
           lastCommit=$(cat ./version || echo "NULL")
           if [ ${latestCommit} = ${lastCommit} ]; \
           then \
@@ -81,7 +81,7 @@ jobs:
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
-          rm go-cqhttp/go-cqhttp
+          rm go-cqhttp/go-cqhttp*
           rm -rf /tmp/.buildx-cache/go-cqhttp
           mv /tmp/.buildx-cache/go-cqhttp-new /tmp/.buildx-cache/go-cqhttp
 
