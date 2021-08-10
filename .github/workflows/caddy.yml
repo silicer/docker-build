@@ -67,7 +67,7 @@ jobs:
           tags: silicer/caddy:latest
           context: ./caddy
           cache-from: type=local,src=/tmp/.buildx-cache/caddy
-          cache-to: type=local,dest=/tmp/.buildx-cache/caddy,mode=max
+          cache-to: type=local,dest=/tmp/.buildx-cache/caddy-new,mode=max
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
