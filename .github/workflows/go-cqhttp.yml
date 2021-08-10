@@ -74,9 +74,9 @@ jobs:
           context: ./go-cqhttp
           cache-from: type=local,src=/tmp/.buildx-cache/go-cqhttp
           cache-to: type=local,dest=/tmp/.buildx-cache/go-cqhttp-new,mode=max
-          tags:
-            - silicer/go-cqhttp:latest
-            - silicer/go-cqhttp:${{ steps.checker.outputs.version }}
+          tags: |
+            silicer/go-cqhttp:latest
+            silicer/go-cqhttp:${{ steps.checker.outputs.version }}
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}

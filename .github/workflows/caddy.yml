@@ -67,9 +67,9 @@ jobs:
           context: ./caddy
           cache-from: type=local,src=/tmp/.buildx-cache/caddy
           cache-to: type=local,dest=/tmp/.buildx-cache/caddy-new,mode=max
-          tags:
-            - silicer/caddy:latest
-            - silicer/caddy:${{ steps.checker.outputs.version }}
+          tags: |
+            silicer/caddy:latest
+            silicer/caddy:${{ steps.checker.outputs.version }}
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
