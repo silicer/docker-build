@@ -101,8 +101,7 @@ jobs:
             哔哩哔哩HD更新了！
             [👍点此下载最新版本](${{ env.URL }})
         run: |
-          ESCAPED=`python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["MESSAGE"])))'`
-          curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${ESCAPED}&parse_mode=MarkdownV2"
+          curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${MESSAGE}&parse_mode=MarkdownV2"
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
