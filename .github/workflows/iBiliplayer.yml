@@ -1,0 +1,110 @@
+name: iBliplayer HD patch
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 3 * * *
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install xmllint
+        run: sudo apt install libxml2-utils -y
+
+      - name: Check biliplayer latest release ver
+        id: checker
+        run: |
+          cd iBiliplayer
+          metaData=$(curl -sSL https://dl.love4taylor.com/bilibili-apk/hd/rss.php |
+              xmllint --xpath "/rss/channel/item[1]" -)
+          versionName=$(echo ${metaData} | xmllint --xpath "string(//title)" -)
+          downloadAddress=$(echo ${metaData} | xmllint --xpath "string(//guid)")
+          if [ ${versionName} != $(cat ./version) ]; then
+              echo "::set-output name=ifUpdated::true"
+              echo "${versionName}" >./version
+              echo "::set-output name=apk::${versionName}"
+              curl -sSL ${downloadAddress} -O
+          else
+              echo "::set-output name=ifUpdated::false"
+          fi
+
+      - name: Import GPG Key
+        id: import_gpg
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          git-user-signingkey: true
+          git-commit-gpgsign: true
+
+      - name: Setup Java and LSPatch
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: actions/setup-java@v2
+        with:
+          distribution: "zulu"
+          java-version: "11"
+        run: |
+          cd iBiliplayer
+          curl -sSL -O https://nightly.link/LSPosed/LSPatch/workflows/main/lsp/lspatch-release.zip
+          unzip lspatch-release.zip
+          rm lspatch-release.zip
+          curl -sSL -O https://nightly.link/yujincheng08/BiliRoaming/workflows/android/master/snapshot.zip
+          unzip snapshot.zip
+          rm snapshot.zip
+          echo "BiliRoaming=$(ls | grep BiliRoaming)" >> $GITHUB_ENV
+
+      - name: Patch
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        id: patcher
+        run: |
+          cd iBiliplayer
+          java -jar lspatch.jar ${{ steps.checker.outputs.apk }} -m ${{ env.BiliRoaming }} --v1 false
+          echo "ARTIFACTDIR=$PWD" >> $GITHUB_ENV
+          echo "ARTIFACT=$(ls | grep lv0-xposed-signed.apk)" >> $GITHUB_ENV
+
+      - name: Upload to artifact
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACTDIR }}
+
+      - name: Upload to telegram
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        env:
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          FILE: ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }}
+        run: curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHAT_ID}&media=%5B%7B%22type%22%3A%22document%22%2C%22media%22%3A%22attach%3A%2F%2Frelease%22%2C%22parse_mode%22%3A%22MarkdownV2%22%2C%22caption%22%3A%22%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9HD%E6%9B%B4%E6%96%B0%E4%BA%86%EF%BC%81%22%7D%5D" -F release="@$FILE"
+
+      - name: Post build and push
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        run: |
+          cd iBiliplayer
+          rm -rf !version
+
+      - name: commit
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        run: |
+          git config --global user.email ${{ secrets.mail }}
+          git config --global user.name ${{ secrets.username }}
+          git add .
+          tIme=$(env TZ=Asia/Shanghai date "+%Y-%m-%d %H:%M:%S")
+          git commit -S -m "iBiliplayer built and updated at ${tIme} UTC+8" -a
+
+      - name: Push changes
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master

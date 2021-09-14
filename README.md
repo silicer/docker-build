@@ -13,3 +13,4 @@
 - [Tsuk1ko/cq-picsearcher-bot](https://github.com/Tsuk1ko/cq-picsearcher-bot)
 - [Quan666/ELF_RSS](https://github.com/Quan666/ELF_RSS)
 - [caddyserver/caddy](https://github.com/caddyserver/caddy)(带`replace-response`和`caddy2-filter`插件)
+- [Mrs4s/go-cqhttp](https://github.com/Mrs4s/go-cqhttp)
