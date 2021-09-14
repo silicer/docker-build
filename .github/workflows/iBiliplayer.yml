@@ -80,21 +80,35 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.ARTIFACT }}
-          path: ${{ env.ARTIFACTDIR }}
+          path: ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }}
 
-      - name: Upload to telegram
+      - name: Upload to WeTransfer
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        run: |
+          cd iBiliplayer
+          curl -fsSL git.io/file-transfer | sh
+          ./transfer wet -s -p 16 --no-progress ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }} 2>&1 | tee wetransfer.log
+          echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
+          echo "URL=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_ENV
+
+      
+      - name: Push to telegram
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         env:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          FILE: ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }}
-        run: curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHAT_ID}&media=%5B%7B%22type%22%3A%22document%22%2C%22media%22%3A%22attach%3A%2F%2Frelease%22%2C%22parse_mode%22%3A%22MarkdownV2%22%2C%22caption%22%3A%22%E5%93%94%E5%93%A9%E5%93%94%E5%93%A9HD%E6%9B%B4%E6%96%B0%E4%BA%86%EF%BC%81%22%7D%5D" -F release="@$FILE"
+          MESSAGE: |+
+            哔哩哔哩HD更新了！
+            [👍点此下载最新版本](${{ env.URL }})
+        run: |
+          ESCAPED=`python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["MESSAGE"])))'`
+          curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHAT_ID}&media=%5B%7B%22type%22:%22document%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D"
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           cd iBiliplayer
-          rm -rf !version
+          rm -rf !("version")
 
       - name: commit
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
