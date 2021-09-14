@@ -108,7 +108,9 @@ jobs:
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           cd iBiliplayer
-          rm -rf !("version")
+          shopt -s extglob
+          shopt -s
+          rm -rf !(version)
 
       - name: commit
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
