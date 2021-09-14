@@ -55,6 +55,7 @@ jobs:
           java-version: "11"
         
       - name: Setup LSPatch
+        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           cd iBiliplayer
           curl -sSL -O https://nightly.link/LSPosed/LSPatch/workflows/main/lsp/lspatch-release.zip
