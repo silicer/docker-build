@@ -47,12 +47,14 @@ jobs:
           git-user-signingkey: true
           git-commit-gpgsign: true
 
-      - name: Setup Java and LSPatch
+      - name: Setup Java
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: actions/setup-java@v2
         with:
           distribution: "zulu"
           java-version: "11"
+        
+      - name: Setup LSPatch
         run: |
           cd iBiliplayer
           curl -sSL -O https://nightly.link/LSPosed/LSPatch/workflows/main/lsp/lspatch-release.zip
