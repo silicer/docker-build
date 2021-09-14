@@ -27,7 +27,7 @@ jobs:
           metaData=$(curl -sSL https://dl.love4taylor.com/bilibili-apk/hd/rss.php |
               xmllint --xpath "/rss/channel/item[1]" -)
           versionName=$(echo ${metaData} | xmllint --xpath "string(//title)" -)
-          downloadAddress=$(echo ${metaData} | xmllint --xpath "string(//guid)")
+          downloadAddress=$(echo ${metaData} | xmllint --xpath "string(//guid)" -)
           if [ ${versionName} != $(cat ./version) ]; then
               echo "::set-output name=ifUpdated::true"
               echo "${versionName}" >./version
