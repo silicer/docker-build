@@ -102,7 +102,7 @@ jobs:
             [👍点此下载最新版本](${{ env.URL }})
         run: |
           ESCAPED=`python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["MESSAGE"])))'`
-          curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHAT_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D"
+          curl -v "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${ESCAPED}&parse_mode=MarkdownV2"
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
