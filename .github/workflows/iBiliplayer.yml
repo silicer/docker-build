@@ -101,10 +101,11 @@ jobs:
           FILE: ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }}
           MESSAGE: |+
             哔哩哔哩HD更新了！
-            [👍点此下载最新版本](${{ env.URL }})
+            [👍点此](${{ env.URL }})下载最新版本
+            或者直接从这里下载附件👇
         run: |
           ESCAPED=`python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["COMMIT_MESSAGE"])))'`
-          curl -v "https://${}/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHAT_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://release%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D" -F release="@${FILE}"
+          curl -v "https://${URL}/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHAT_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://release%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D" -F release="@${FILE}"
 
       - name: Post build and push
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
