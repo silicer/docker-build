@@ -2,7 +2,7 @@ name: go-cqhttp 镜像构建
 on:
   workflow_dispatch:
   schedule:
-    - cron: 0 3 * * *
+    - cron: 0 */2 * * *
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
