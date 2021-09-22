@@ -79,7 +79,7 @@ jobs:
         if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.ARTIFACT }}
+          name: iBiliPlayer-hdRelease
           path: ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }}
 
       - name: Upload to WeTransfer
