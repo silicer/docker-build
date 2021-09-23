@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: 29 0/2 * * *
 
+env:
+  COMMIT: false
+  UPLOAD_ARTIFACT: true
+  UPLOAD_WETRANSFER: false
+  UPLOAD_TELEGRAM: false
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -40,7 +46,7 @@ jobs:
 
       - name: Import GPG Key
         id: import_gpg
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        if: steps.checker.outputs.ifUpdated == 'true' && env.COMMIT == 'true'
         uses: crazy-max/ghaction-import-gpg@v3
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -49,14 +55,14 @@ jobs:
           git-commit-gpgsign: true
 
       - name: Setup Java
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        if: steps.checker.outputs.ifUpdated == 'true'
         uses: actions/setup-java@v2
         with:
           distribution: "zulu"
           java-version: "11"
         
       - name: Setup LSPatch
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        if: steps.checker.outputs.ifUpdated == 'true'
         run: |
           cd iBiliplayer
           curl -sSL -O https://nightly.link/LSPosed/LSPatch/workflows/main/lsp/lspatch-release.zip
@@ -68,7 +74,7 @@ jobs:
           echo "BiliRoaming=$(ls | grep BiliRoaming)" >> $GITHUB_ENV
 
       - name: Patch
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        if: steps.checker.outputs.ifUpdated == 'true'
         id: patcher
         run: |
           cd iBiliplayer
@@ -77,14 +83,14 @@ jobs:
           echo "ARTIFACT=$(ls | grep lv0-xposed-signed.apk)" >> $GITHUB_ENV
 
       - name: Upload to artifact
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        if: steps.checker.outputs.ifUpdated == 'true' && env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@v2
         with:
           name: iBiliPlayer-hdRelease
           path: ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }}
 
       - name: Upload to WeTransfer
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        if: steps.checker.outputs.ifUpdated == 'true' && env.UPLOAD_WETRANSFER == 'true'
         run: |
           cd iBiliplayer
           curl -fsSL git.io/file-transfer | sh
@@ -94,7 +100,7 @@ jobs:
 
       
       - name: Push to telegram
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        if: steps.checker.outputs.ifUpdated == 'true' && env.UPLOAD_TELEGRAM == 'true'
         env:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
