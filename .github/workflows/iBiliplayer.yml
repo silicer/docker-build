@@ -5,10 +5,10 @@ on:
     - cron: 29 0/2 * * *
 
 env:
-  COMMIT: false
+  COMMIT: true
   UPLOAD_ARTIFACT: true
-  UPLOAD_WETRANSFER: false
-  UPLOAD_TELEGRAM: false
+  UPLOAD_WETRANSFER: true
+  UPLOAD_TELEGRAM: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
