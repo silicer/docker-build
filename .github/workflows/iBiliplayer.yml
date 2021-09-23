@@ -132,7 +132,7 @@ jobs:
           git commit -S -m "iBiliplayer built and updated at ${tIme} UTC+8" -a
 
       - name: Push changes
-        if: $steps.checker.outputs.ifUpdated == 'true' && env.COMMIT == 'true'
+        if: steps.checker.outputs.ifUpdated == 'true' && env.COMMIT == 'true'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
