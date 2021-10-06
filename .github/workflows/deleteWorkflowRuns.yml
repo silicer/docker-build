@@ -1,0 +1,13 @@
+name: 批量删除 Workflow Runs
+on:
+  workflow_dispatch:
+
+jobs:
+  del_runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 仅保留7天内的 Workflow 但至少留下一个
+        uses: GitRML/delete-workflow-runs@main
+        with:
+          retain_days: 7
+          keep_minimum_runs: 1
