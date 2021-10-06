@@ -26,8 +26,7 @@ jobs:
         id: checker
         run: |
           cd cq-picsearcher-bot
-          echo "${{ env.VERSION }}" > ./version;
-          fi
+          echo "${{ env.VERSION }}" > ./version
 
       - name: Import GPG Key
         id: import_gpg
