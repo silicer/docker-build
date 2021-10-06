@@ -1,8 +1,10 @@
-name: ELF_RSS build
+name: ELF_RSS 镜像构建
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: 17 3 * * *
+  repository_dispatch:
+    types: [ELF_RSS]
+
+env:
+  VERSION: ${{ github.event.client_payload.version }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -20,21 +22,14 @@ jobs:
       - name: Clone
         run: git clone https://github.com/Quan666/ELF_RSS ./ELF_RSS/ELF_RSS
 
-      - name: Check Quan666/ELF_RSS ver
+      - name: 更新 Quan666/ELF_RSS 版本号
         id: checker
         run: |
           cd ELF_RSS
-          latestCommit=$(cd ./ELF_RSS && git log -1 --pretty=format:"%H")
-          lastCommit=$(cat ./version || echo "NULL")
-          if [ ${latestCommit} = ${lastCommit} ]; \
-          then \
-          echo "::set-output name=ifUpdated::false"; \
-          else echo "::set-output name=ifUpdated::true" && echo "${latestCommit}" > ./version; \
-          fi
+          echo "${{ env.VERSION }}" > ./version
 
       - name: Import GPG Key
         id: import_gpg
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: crazy-max/ghaction-import-gpg@v3
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -43,18 +38,15 @@ jobs:
           git-commit-gpgsign: true
 
       - name: Set up Docker Buildx
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: docker/setup-buildx-action@v1
 
       - name: Login to DockerHub
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
       - name: Set up cache
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache/ELF_RSS
@@ -64,7 +56,6 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v2
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         with:
           push: true
           tags: silicer/elf_rss:latest
@@ -73,14 +64,12 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache/ELF_RSS-new,mode=max
 
       - name: Post build and push
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           rm -rf ./ELF_RSS/ELF_RSS
           rm -rf /tmp/.buildx-cache/ELF_RSS
           mv /tmp/.buildx-cache/ELF_RSS-new /tmp/.buildx-cache/ELF_RSS
 
       - name: commit
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           git config --global user.email ${{ secrets.mail }}
           git config --global user.name ${{ secrets.username }}
@@ -89,7 +78,6 @@ jobs:
           git commit -S -m "ELF_RSS built and updated at ${tIme} UTC+8" -a
 
       - name: Push changes
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

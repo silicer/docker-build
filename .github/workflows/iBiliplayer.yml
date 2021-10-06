@@ -1,14 +1,15 @@
-name: iBliplayer HD patch
+name: 哔哩哔哩HD LSPatch
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: 29 0/2 * * *
+  repository_dispatch:
+    types: [iBiliplayer]
 
 env:
   COMMIT: true
   UPLOAD_ARTIFACT: true
   UPLOAD_WETRANSFER: true
   UPLOAD_TELEGRAM: true
+  APK: ${{ github.event.client_payload.apk }}
+  DLLINK: ${{ github.event.client_payload.dlLink }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -23,30 +24,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install xmllint
-        run: sudo apt install libxml2-utils -y
+      # - name: Install xmllint
+      #   run: sudo apt install libxml2-utils -y
 
-      - name: Check biliplayer latest release ver
+      - name: 更新版本号并下载原始apk
         id: checker
         run: |
           cd iBiliplayer
-          metaData=$(curl -sSL https://dl.love4taylor.com/bilibili-apk/hd/rss.php |
-              xmllint --xpath "/rss/channel/item[1]" -)
-          versionName=$(echo ${metaData} | xmllint --xpath "string(//title)" -)
-          downloadAddress=$(echo ${metaData} | xmllint --xpath "string(//guid)" -)
-          if [ ${versionName} != $(cat ./version) ]; then
-              echo "::set-output name=ifUpdated::true"
-              echo "${versionName}" >./version
-              echo "::set-output name=apk::${versionName}"
-              curl -sSL ${downloadAddress} -O
-          else
-              echo "::set-output name=ifUpdated::false"
-              exit 7
-          fi
+          echo ${{ env.APK }} >　./version
+          curl -sSL ${{ env.DLLINK }} -O
 
       - name: Import GPG Key
         id: import_gpg
-        if: steps.checker.outputs.ifUpdated == 'true' && env.COMMIT == 'true'
+        # if: steps.checker.outputs.ifUpdated == 'true' && env.COMMIT == 'true'
+        if: env.COMMIT == 'true'
         uses: crazy-max/ghaction-import-gpg@v3
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -55,14 +46,12 @@ jobs:
           git-commit-gpgsign: true
 
       - name: Setup Java
-        if: steps.checker.outputs.ifUpdated == 'true'
         uses: actions/setup-java@v2
         with:
           distribution: "zulu"
           java-version: "11"
         
       - name: Setup LSPatch
-        if: steps.checker.outputs.ifUpdated == 'true'
         run: |
           cd iBiliplayer
           curl -sSL -O https://nightly.link/LSPosed/LSPatch/workflows/main/lsp/lspatch-release.zip
@@ -74,23 +63,22 @@ jobs:
           echo "BiliRoaming=$(ls | grep BiliRoaming)" >> $GITHUB_ENV
 
       - name: Patch
-        if: steps.checker.outputs.ifUpdated == 'true'
         id: patcher
         run: |
           cd iBiliplayer
-          java -jar lspatch.jar ${{ steps.checker.outputs.apk }} -m ${{ env.BiliRoaming }} --v1 false
+          java -jar lspatch.jar ${{ env.APK }} -m ${{ env.BiliRoaming }} --v1 false
           echo "ARTIFACTDIR=$PWD" >> $GITHUB_ENV
           echo "ARTIFACT=$(ls | grep lv0-xposed-signed.apk)" >> $GITHUB_ENV
 
       - name: Upload to artifact
-        if: steps.checker.outputs.ifUpdated == 'true' && env.UPLOAD_ARTIFACT == 'true'
+        if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@v2
         with:
           name: iBiliPlayer-hdRelease
           path: ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }}
 
       - name: Upload to WeTransfer
-        if: steps.checker.outputs.ifUpdated == 'true' && env.UPLOAD_WETRANSFER == 'true'
+        if: env.UPLOAD_WETRANSFER == 'true'
         run: |
           cd iBiliplayer
           curl -fsSL git.io/file-transfer | sh
@@ -100,7 +88,7 @@ jobs:
 
       
       - name: Push to telegram
-        if: steps.checker.outputs.ifUpdated == 'true' && env.UPLOAD_TELEGRAM == 'true'
+        if: env.UPLOAD_TELEGRAM == 'true'
         env:
           CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -115,7 +103,6 @@ jobs:
           curl -v "https://${URL}/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHAT_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://release%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D" -F release="@${FILE}"
 
       - name: Post build and push
-        if: steps.checker.outputs.ifUpdated == 'true'
         run: |
           cd iBiliplayer
           shopt -s extglob
@@ -123,7 +110,7 @@ jobs:
           rm -rf !(version)
 
       - name: commit
-        if: steps.checker.outputs.ifUpdated == 'true' && env.COMMIT == 'true'
+        if: env.COMMIT == 'true'
         run: |
           git config --global user.email ${{ secrets.mail }}
           git config --global user.name ${{ secrets.username }}
@@ -132,7 +119,7 @@ jobs:
           git commit -S -m "iBiliplayer built and updated at ${tIme} UTC+8" -a
 
       - name: Push changes
-        if: steps.checker.outputs.ifUpdated == 'true' && env.COMMIT == 'true'
+        if: env.COMMIT == 'true'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

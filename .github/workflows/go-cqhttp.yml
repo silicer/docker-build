@@ -1,8 +1,10 @@
 name: go-cqhttp 镜像构建
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: 0 */2 * * *
+  repository_dispatch:
+    types: [go-cqhttp]
+
+env:
+  VERSION: ${{ github.event.client_payload.version }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -17,28 +19,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Check go-cqhttp latest release ver
+      - name: 更新版本号
         id: checker
         run: |
-          cd go-cqhttp
-          latestCommit=$(curl -sSL https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          lastCommit=$(cat ./version || echo "NULL")
-          if [ ${latestCommit} = ${lastCommit} ]; \
-          then \
-          echo "::set-output name=ifUpdated::false"; \
-          else echo "::set-output name=ifUpdated::true" && echo "::set-output name=version::${latestCommit}" && echo "${latestCommit}" > ./version; \
-          fi
+          echo ${{ env.VERSION }} > go-cqhttp/version
 
       - name: Download latest go-cqhttp release
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           cd go-cqhttp
-          curl -sSL -O https://github.com/Mrs4s/go-cqhttp/releases/latest/download/go-cqhttp_linux_amd64.tar.gz
+          curl -sSL -O https://github.com/Mrs4s/go-cqhttp/releases/download/${{ env.VERSION }}/go-cqhttp_linux_amd64.tar.gz
           tar -xzf go-cqhttp_linux_amd64.tar.gz go-cqhttp
 
       - name: Import GPG Key
         id: import_gpg
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: crazy-max/ghaction-import-gpg@v3
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -47,18 +42,18 @@ jobs:
           git-commit-gpgsign: true
 
       - name: Set up Docker Buildx
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: docker/setup-buildx-action@v1
 
       - name: Login to DockerHub
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
       - name: Set up cache
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache/go-cqhttp
@@ -68,7 +63,7 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v2
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         with:
           push: true
           context: ./go-cqhttp
@@ -79,14 +74,14 @@ jobs:
             silicer/go-cqhttp:${{ steps.checker.outputs.version }}
 
       - name: Post build and push
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           rm go-cqhttp/go-cqhttp*
           rm -rf /tmp/.buildx-cache/go-cqhttp
           mv /tmp/.buildx-cache/go-cqhttp-new /tmp/.buildx-cache/go-cqhttp
 
       - name: commit
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           git config --global user.email ${{ secrets.mail }}
           git config --global user.name ${{ secrets.username }}
@@ -95,7 +90,7 @@ jobs:
           git commit -S -m "go-cqhttp built and updated at ${tIme} UTC+8" -a
 
       - name: Push changes
-        if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,153 @@
+name: 更新检测器
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 */2 * * *
+
+jobs:
+  go-cqhttp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: 检测 go-cqhttp 最新版本号
+        id: checker
+        run: |
+          cd go-cqhttp
+          latestCommit=$(curl -sSL https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          lastCommit=$(cat ./version || echo "NULL")
+          if
+            [ ${latestCommit} = ${lastCommit} ]
+          then
+            echo "::set-output name=ifUpdated::false"
+          else
+            echo "::set-output name=ifUpdated::true"  && echo "::set-output name=version::${latestCommit}"
+          fi
+
+      - name: 触发更新
+        uses: peter-evans/repository-dispatch@v1
+        if: steps.checker.outputs.ifUpdated == 'true'
+        with:
+          token: ${{ secrets.ACTIONS_TRIGGER }}
+          event-type: go-cqhttp
+          client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
+
+  iBiliplayer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: 安装 xmllint
+        run: sudo apt-get install libxml2-utils -y
+
+      - name: 检测哔哩哔哩HD最新版本
+        id: checker
+        run: |
+          cd iBiliplayer
+          metaData=$(curl -sSL https://dl.love4taylor.com/bilibili-apk/hd/rss.php |
+              xmllint --xpath "/rss/channel/item[1]" -)
+          versionName=$(echo ${metaData} | xmllint --xpath "string(//title)" -)
+          downloadAddress=$(echo ${metaData} | xmllint --xpath "string(//guid)" -)
+          if [ ${versionName} != $(cat ./version || echo "NULL") ]; then
+              echo "::set-output name=ifUpdated::true"
+              echo "::set-output name=apk::${versionName}"
+              echo "::set-output name=dlLink::${downloadAddress}"
+          else
+              echo "::set-output name=ifUpdated::false"
+          fi
+
+      - name: 触发更新
+        uses: peter-evans/repository-dispatch@v1
+        if: steps.checker.outputs.ifUpdated == 'true'
+        with:
+          token: ${{ secrets.ACTIONS_TRIGGER }}
+          event-type: iBiliplayer
+          client-payload: '{"apk": "${{ steps.checker.outputs.apk }}", "dlLink": ${{ steps.checker.outputs.dlLink }} }'
+
+  ELF_RSS:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: 检测 Quan666/ELFRSS 最新提交
+        id: checker
+        run: |
+          git clone https://github.com/Quan666/ELF_RSS ./ELF_RSS/ELF_RSS
+          cd ELF_RSS
+          latestCommit=$(cd ./ELF_RSS && git log -1 --pretty=format:"%H")
+          lastCommit=$(cat ./version || echo "NULL")
+          if
+            [ ${latestCommit} = ${lastCommit} ]
+          then
+            echo "::set-output name=ifUpdated::false"
+          else
+            echo "::set-output name=ifUpdated::true" && echo "::set-output name=version::${latestCommit}"
+          fi
+
+      - name: 触发更新
+        uses: peter-evans/repository-dispatch@v1
+        if: steps.checker.outputs.ifUpdated == 'true'
+        with:
+          token: ${{ secrets.ACTIONS_TRIGGER }}
+          event-type: ELF_RSS
+          client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
+
+  cq-picsearcher-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: 检测 Tsuk1ko/cq-picsearch-bot 最新提交
+        id: checker
+        run: |
+          git clone https://github.com/Tsuk1ko/cq-picsearcher-bot ./cq-picsearcher-bot/cq-picsearcher-bot
+          cd cq-picsearcher-bot
+          latestCommit=$(cd ./cq-picsearcher-bot && git log -1 --pretty=format:"%H")
+          lastCommit=$(cat ./version || echo "NULL")
+          if [ ${latestCommit} = ${lastCommit} ]; then
+            echo "::set-output name=ifUpdated::false"
+          else
+            echo "::set-output name=ifUpdated::true" && echo "::set-output name=version::${latestCommit}"
+          fi
+
+      - name: 触发更新
+        uses: peter-evans/repository-dispatch@v1
+        if: steps.checker.outputs.ifUpdated == 'true'
+        with:
+          token: ${{ secrets.ACTIONS_TRIGGER }}
+          event-type: cq-picsearcher-bot
+          client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
+
+  caddy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: 检测 caddy 最新版本号
+        id: checker
+        run: |
+          cd caddy
+          latestCommit=$(curl -sSL https://api.github.com/repos/caddyserver/caddy/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          lastCommit=$(cat ./version || echo "NULL")
+          if
+            [ ${latestCommit} = ${lastCommit} ]
+          then
+            echo "::set-output name=ifUpdated::false"
+          else
+            echo "::set-output name=ifUpdated::true"  && echo "::set-output name=version::${latestCommit}"
+          fi
+
+      - name: 触发更新
+        uses: peter-evans/repository-dispatch@v1
+        if: steps.checker.outputs.ifUpdated == 'true'
+        with:
+          token: ${{ secrets.ACTIONS_TRIGGER }}
+          event-type: caddy
+          client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
+
+
