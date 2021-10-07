@@ -1,6 +1,11 @@
 name: 批量删除 Workflow Runs
 on:
   workflow_dispatch:
+    inputs:
+      retain_days:
+        description: 'Workflow 保留天数'
+        required: false
+        default: 7
 
 jobs:
   del_runs:
@@ -9,5 +14,5 @@ jobs:
       - name: 仅保留7天内的 Workflow 但至少留下一个
         uses: GitRML/delete-workflow-runs@main
         with:
-          retain_days: 7
+          retain_days: ${{ github.event.inputs.retain_days }}
           keep_minimum_runs: 1
