@@ -64,7 +64,7 @@ jobs:
         with:
           token: ${{ secrets.ACTIONS_TRIGGER }}
           event-type: iBiliplayer
-          client-payload: '{"apk": "${{ steps.checker.outputs.apk }}", "dlLink": ${{ steps.checker.outputs.dlLink }} }'
+          client-payload: '{"apk": "${{ steps.checker.outputs.apk }}", "dlLink": "${{ steps.checker.outputs.dlLink }}" }'
 
   ELF_RSS:
     runs-on: ubuntu-latest
