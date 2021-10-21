@@ -31,7 +31,7 @@ jobs:
         id: checker
         run: |
           cd iBiliplayer
-          echo ${{ env.APK }} >　./version
+          echo ${{ env.APK }} > ./version
           curl -sSL ${{ env.DLLINK }} -O
 
       - name: Import GPG Key
