@@ -3,6 +3,9 @@ on:
   repository_dispatch:
     types: [caddy]
 
+env:
+  VERSION: ${{ github.event.client_payload.version }}
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -57,7 +60,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache/caddy-new,mode=max
           tags: |
             silicer/caddy:latest
-            silicer/caddy:${{ steps.checker.outputs.version }}
+            silicer/caddy:${{ env.VERSION }}
 
       - name: Post build and push
         run: |
