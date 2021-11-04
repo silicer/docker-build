@@ -8,6 +8,7 @@ env:
   UPLOAD_ARTIFACT: true
   UPLOAD_WETRANSFER: true
   UPLOAD_TELEGRAM: true
+  UPLOAD_RELEASE: true
   APK: ${{ github.event.client_payload.apk }}
   DLLINK: ${{ github.event.client_payload.dlLink }}
 
@@ -31,7 +32,8 @@ jobs:
         id: checker
         run: |
           cd iBiliplayer
-          echo ${{ env.APK }} > ./version
+          echo "VERSION=$(echo ${{ env.APK }} | grep -o -P '\d(\.\d){2}-b\d{7,}')" >> $GITHUB_ENV
+          echo ${{ env.VERSION }} > ./version
           curl -sSL ${{ env.DLLINK }} -O
 
       - name: Import GPG Key
@@ -102,6 +104,14 @@ jobs:
           ESCAPED=`python3 -c 'import json,os,urllib.parse; print(urllib.parse.quote(json.dumps(os.environ["MESSAGE"])))'`
           curl -v "https://${URL}/bot${BOT_TOKEN}/sendMediaGroup?chat_id=${CHAT_ID}&media=%5B%7B%22type%22:%22document%22,%20%22media%22:%22attach://release%22,%22parse_mode%22:%22MarkdownV2%22,%22caption%22:${ESCAPED}%7D%5D" -F release="@${FILE}"
 
+      - name: Uplaod to Release
+        if: env.UPLOAD_RELEASE == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.ARTIFACTDIR }}/${{ env.ARTIFACT }}
+          name: iBiliplayerHD-${{ env.VERSION }}
+          tag_name: ${{ env.VERSION }}
+      
       - name: Post build and push
         run: |
           cd iBiliplayer
