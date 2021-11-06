@@ -32,9 +32,10 @@ jobs:
         id: checker
         run: |
           cd iBiliplayer
-          echo "VERSION=$(echo ${{ env.APK }} | grep -o -P '\d(\.\d){2}-b\d{7,}')" >> $GITHUB_ENV
-          echo ${{ env.VERSION }}
-          echo ${{ env.VERSION }} > ./version
+          VERSION=$(echo ${{ env.APK }} | grep -o -P '\d(\.\d){2}-b\d{7,}')
+          # echo "VERSION=$(echo ${{ env.APK }} | grep -o -P '\d(\.\d){2}-b\d{7,}')" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo ${VERSION} > ./version
           curl -sSL ${{ env.DLLINK }} -O
 
       - name: Import GPG Key
