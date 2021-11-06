@@ -18,7 +18,7 @@ jobs:
           latestCommit=$(curl -sSL https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
           lastCommit=$(cat ./version || echo "NULL")
           if
-            [ ${latestCommit} = ${lastCommit} ]
+            [[ ${latestCommit} = ${lastCommit} ]]
           then
             echo "::set-output name=ifUpdated::false"
           else
@@ -50,7 +50,7 @@ jobs:
               xmllint --xpath "/rss/channel/item[1]" -)
           versionName=$(echo ${metaData} | xmllint --xpath "string(//title)" -)
           downloadAddress=$(echo ${metaData} | xmllint --xpath "string(//guid)" -)
-          if [ ${versionName} != $(cat ./version || echo "NULL") ]; then
+          if [[ ${versionName} != $(cat ./version || echo "NULL") ]]; then
               echo "::set-output name=ifUpdated::true"
               echo "::set-output name=apk::${versionName}"
               echo "::set-output name=dlLink::${downloadAddress}"
@@ -80,7 +80,7 @@ jobs:
           latestCommit=$(cd ./ELF_RSS && git log -1 --pretty=format:"%H")
           lastCommit=$(cat ./version || echo "NULL")
           if
-            [ ${latestCommit} = ${lastCommit} ]
+            [[ ${latestCommit} = ${lastCommit} ]]
           then
             echo "::set-output name=ifUpdated::false"
           else
@@ -108,7 +108,7 @@ jobs:
           cd cq-picsearcher-bot
           latestCommit=$(cd ./cq-picsearcher-bot && git log -1 --pretty=format:"%H")
           lastCommit=$(cat ./version || echo "NULL")
-          if [ ${latestCommit} = ${lastCommit} ]; then
+          if [[ ${latestCommit} = ${lastCommit} ]]; then
             echo "::set-output name=ifUpdated::false"
           else
             echo "::set-output name=ifUpdated::true" && echo "::set-output name=version::${latestCommit}"
@@ -135,7 +135,7 @@ jobs:
           latestCommit=$(curl -sSL https://api.github.com/repos/caddyserver/caddy/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
           lastCommit=$(cat ./version || echo "NULL")
           if
-            [ ${latestCommit} = ${lastCommit} ]
+            [[ ${latestCommit} = ${lastCommit} ]]
           then
             echo "::set-output name=ifUpdated::false"
           else
