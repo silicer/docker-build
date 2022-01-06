@@ -61,7 +61,9 @@ jobs:
           rm lspatch-release.zip
           curl -sSL -O https://nightly.link/yujincheng08/BiliRoaming/workflows/android/master/snapshot.zip
           unzip snapshot.zip
+          cp apk/release/app-release.apk biliroaming.apk
           rm snapshot.zip
+          rm -r apk mapping
           echo "BiliRoaming=$(ls | grep BiliRoaming)" >> $GITHUB_ENV
 
       - name: Patch
