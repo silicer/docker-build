@@ -1,10 +1,11 @@
-FROM node:lts-alpine
+FROM node:lts-bullseye-slim
 
 # 设置时区
-RUN apk add --no-cache --update tzdata && \
-    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    echo "Asia/Shanghai" > /etc/timezone && \
-    apk del tzdata
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+# RUN apk add --no-cache --update tzdata && \
+#     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+#     echo "Asia/Shanghai" > /etc/timezone && \
+#     apk del tzdata
 
 COPY cq-picsearcher-bot /cq-picsearcher-bot
 WORKDIR /cq-picsearcher-bot
