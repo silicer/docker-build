@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:latest
+FROM python:3.9.9-slim-bullseye
 
 ENV TZ Asia/Shanghai
 
