@@ -58,7 +58,9 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: silicer/elf_rss:latest
+          tags: |
+            silicer/elf_rss:latest
+            silicer/elf_rss:${{ env. VERSION }}
           context: ./ELF_RSS
           cache-from: type=local,src=/tmp/.buildx-cache/ELF_RSS
           cache-to: type=local,dest=/tmp/.buildx-cache/ELF_RSS-new,mode=max

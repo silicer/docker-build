@@ -24,12 +24,14 @@ jobs:
         run: |
           echo ${{ env.VERSION }} > go-cqhttp/version
 
-      - name: Download latest go-cqhttp release
+      - name: Download latest x64 go-cqhttp release
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           cd go-cqhttp
           curl -sSL -O https://github.com/Mrs4s/go-cqhttp/releases/download/${{ env.VERSION }}/go-cqhttp_linux_amd64.tar.gz
-          tar -xzf go-cqhttp_linux_amd64.tar.gz go-cqhttp
+          curl -sSL -O https://github.com/Mrs4s/go-cqhttp/releases/download/${{ env.VERSION }}/go-cqhttp_linux_arm64.tar.gz
+          tar -xzf go-cqhttp_linux_amd64.tar.gz go-cqhttp -O > go-cqhttp.amd64
+          tar -xzf go-cqhttp_linux_arm64.tar.gz go-cqhttp -O > go-cqhttp.arm64
 
       - name: Import GPG Key
         id: import_gpg
@@ -40,6 +42,9 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
           git-user-signingkey: true
           git-commit-gpgsign: true
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
 
       - name: Set up Docker Buildx
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
@@ -67,6 +72,7 @@ jobs:
         with:
           push: true
           context: ./go-cqhttp
+          platforms: linux/amd64, linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache/go-cqhttp
           cache-to: type=local,dest=/tmp/.buildx-cache/go-cqhttp-new,mode=max
           tags: |
