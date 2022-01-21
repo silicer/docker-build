@@ -23,7 +23,7 @@ jobs:
       - name: 更新版本号
         id: checker
         run: |
-          if [ ${{ env.VERSION }} ]; then
+          if [ "${{ env.VERSION }}" ]; then
             echo ${{ env.VERSION }} > go-cqhttp/version
           else
             echo "VERSION=$(cat go-cqhttp/version)" >> $GITHUB_ENV

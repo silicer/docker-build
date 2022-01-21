@@ -24,7 +24,7 @@ jobs:
         id: checker
         run: |
           cd caddy
-          if [ ${{ env.VERSION }}]; then
+          if [ "${{ env.VERSION }}" ]; then
             echo ${{ env.VERSION }} > ./version
           else
             echo "VERSION=$(cat ./version)" >> $GITHUB_ENV

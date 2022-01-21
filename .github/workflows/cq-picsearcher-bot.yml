@@ -27,7 +27,7 @@ jobs:
         id: checker
         run: |
           cd cq-picsearcher-bot
-          if [ ${{ env.VERSION }}]; then
+          if [ "${{ env.VERSION }}" ]; then
             echo "${{ env.VERSION }}" > ./version
           else
             echo "VERSION=$(cat ./version)" >> $GITHUB_ENV
