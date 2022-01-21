@@ -2,6 +2,7 @@ name: ELF_RSS 镜像构建
 on:
   repository_dispatch:
     types: [ELF_RSS]
+  workflow_dispatch:
 
 env:
   VERSION: ${{ github.event.client_payload.version }}
@@ -26,7 +27,10 @@ jobs:
         id: checker
         run: |
           cd ELF_RSS
-          echo "${{ env.VERSION }}" > ./version
+          if [ ${{ env.VERSION }} ]; then
+            echo "${{ env.VERSION }}" > ./version
+          else
+            echo "VERSION=$(cat ./version)" >> $GITHUB_ENV
 
       - name: Import GPG Key
         id: import_gpg
@@ -72,6 +76,7 @@ jobs:
           mv /tmp/.buildx-cache/ELF_RSS-new /tmp/.buildx-cache/ELF_RSS
 
       - name: commit
+        if: github.event_name != 'workflow_dispatch'
         run: |
           git config --global user.email ${{ secrets.mail }}
           git config --global user.name ${{ secrets.username }}
@@ -80,6 +85,7 @@ jobs:
           git commit -S -m "ELF_RSS built and updated at ${tIme} UTC+8" -a
 
       - name: Push changes
+        if: github.event_name != 'workflow_dispatch'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

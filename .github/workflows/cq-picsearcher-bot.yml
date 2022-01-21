@@ -2,6 +2,7 @@ name: cq-picsearcher-bot 镜像构建
 on:
   repository_dispatch:
     types: [cq-picsearcher-bot]
+  workflow_dispatch:
 
 env:
   VERSION: ${{ github.event.client_payload.version }}
@@ -26,9 +27,13 @@ jobs:
         id: checker
         run: |
           cd cq-picsearcher-bot
-          echo "${{ env.VERSION }}" > ./version
+          if [ ${{ env.VERSION }}]; then
+            echo "${{ env.VERSION }}" > ./version
+          else
+            echo "VERSION=$(cat ./version)" >> $GITHUB_ENV
 
       - name: Import GPG Key
+        if: github.event_name != 'workflow_dispatch'
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v3
         with:
@@ -76,6 +81,7 @@ jobs:
           mv /tmp/.buildx-cache/cq-picsearcher-bot-new /tmp/.buildx-cache/cq-picsearcher-bot
 
       - name: commit
+        if: github.event_name != 'workflow_dispatch'
         run: |
           git config --global user.email ${{ secrets.mail }}
           git config --global user.name ${{ secrets.username }}
@@ -84,6 +90,7 @@ jobs:
           git commit -S -m "cq-picsearcher-bot built and updated at ${tIme} UTC+8" -a
 
       - name: Push changes
+        if: github.event_name != 'workflow_dispatch'
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}

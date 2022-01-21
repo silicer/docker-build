@@ -2,6 +2,7 @@ name: go-cqhttp 镜像构建
 on:
   repository_dispatch:
     types: [go-cqhttp]
+  workflow_dispatch:
 
 env:
   VERSION: ${{ github.event.client_payload.version }}
@@ -22,7 +23,11 @@ jobs:
       - name: 更新版本号
         id: checker
         run: |
-          echo ${{ env.VERSION }} > go-cqhttp/version
+          if [ ${{ env.VERSION }} ]; then
+            echo ${{ env.VERSION }} > go-cqhttp/version
+          else
+            echo "VERSION=$(cat go-cqhttp/version)" >> $GITHUB_ENV
+
 
       - name: Download latest x64 go-cqhttp release
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
@@ -34,6 +39,7 @@ jobs:
           tar -xzf go-cqhttp_linux_arm64.tar.gz go-cqhttp -O > go-cqhttp.arm64
 
       - name: Import GPG Key
+        if: github.event_name != 'workflow_dispatch'
         id: import_gpg
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: crazy-max/ghaction-import-gpg@v3
@@ -87,6 +93,7 @@ jobs:
           mv /tmp/.buildx-cache/go-cqhttp-new /tmp/.buildx-cache/go-cqhttp
 
       - name: commit
+        if: github.event_name != 'workflow_dispatch'
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           git config --global user.email ${{ secrets.mail }}
@@ -96,6 +103,7 @@ jobs:
           git commit -S -m "go-cqhttp built and updated at ${tIme} UTC+8" -a
 
       - name: Push changes
+        if: github.event_name != 'workflow_dispatch'
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         uses: ad-m/github-push-action@master
         with:
