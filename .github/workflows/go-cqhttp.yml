@@ -27,6 +27,7 @@ jobs:
             echo ${{ env.VERSION }} > go-cqhttp/version
           else
             echo "VERSION=$(cat go-cqhttp/version)" >> $GITHUB_ENV
+          fi
 
 
       - name: Download latest x64 go-cqhttp release

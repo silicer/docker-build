@@ -28,6 +28,7 @@ jobs:
             echo ${{ env.VERSION }} > ./version
           else
             echo "VERSION=$(cat ./version)" >> $GITHUB_ENV
+          fi
 
       - name: Import GPG Key
         if: github.event_name != 'workflow_dispatch'
