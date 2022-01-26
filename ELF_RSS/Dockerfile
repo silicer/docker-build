@@ -6,7 +6,7 @@ COPY ELF_RSS /app
 
 WORKDIR /app
 
-RUN sed 's/nonebot2==2.0.0a15/nonebot2==2.0.0b1/g' -i requirements.txt && python3 -m pip install  --use-deprecated=legacy-resolver -r requirements.txt && ls -lah && \
+RUN python3 -m pip install -r requirements.txt && ls -lah && \
     mv ./.env.dev ./.env.prod
 
 VOLUME ["/app/data", "/app/env.prod"]
