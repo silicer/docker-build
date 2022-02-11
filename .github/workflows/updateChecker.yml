@@ -150,4 +150,30 @@ jobs:
           event-type: caddy
           client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
 
+  v2ray:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
+      - name: 检测 SagerNet/v2ray-core 最新版本号
+        id: checker
+        run: |
+          cd sagernet-v2ray-core
+          latestCommit=$(curl -sSL https://api.github.com/repos/SagerNet/v2ray-core/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          lastCommit=$(cat ./version || echo "NULL")
+          if
+            [[ ${latestCommit} = ${lastCommit} ]]
+          then
+            echo "::set-output name=ifUpdated::false"
+          else
+            echo "::set-output name=ifUpdated::true"  && echo "::set-output name=version::${latestCommit}"
+          fi
+        
+      - name: 触发更新
+        uses: peter-evans/repository-dispatch@v1
+        if: steps.checker.outputs.ifUpdated == 'true'
+        with:
+          token: ${{ secrets.ACTIONS_TRIGGER }}
+          event-type: v2ray
+          client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
