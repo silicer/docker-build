@@ -34,10 +34,10 @@ jobs:
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
         run: |
           cd sagernet-v2ray-core
-          curl -sSL -O https://github.com/SagerNet/v2ray-core/releases/download/${{ env.VERSION }}/v2ray_linux_64.zip
-          curl -sSL -O https://github.com/SagerNet/v2ray-core/releases/download/${{ env.VERSION }}/v2ray_linux_arm64-v8a.zip
-          unzip v2ray_linux_64.zip -d amd64 && rm v2ray_linux_64.zip
-          unzip v2ray_linux_arm64-v8a.zip -d arm64 && rm v2ray_linux_arm64-v8a.zip
+          curl -sSL -O https://github.com/SagerNet/v2ray-core/releases/download/${{ env.VERSION }}/v2ray-linux-64.zip
+          curl -sSL -O https://github.com/SagerNet/v2ray-core/releases/download/${{ env.VERSION }}/v2ray-linux-arm64-v8a.zip
+          unzip v2ray-linux-64.zip -d amd64 && rm v2ray-linux_64.zip
+          unzip v2ray-linux-arm64-v8a.zip -d arm64 && rm v2ray-linux-arm64-v8a.zip
 
       - name: Import GPG Key
         if: github.event_name != 'workflow_dispatch'
