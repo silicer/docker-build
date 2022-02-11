@@ -16,6 +16,7 @@ jobs:
 
     permissions:
       packages: write
+      contents: read
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -60,6 +61,16 @@ jobs:
           git-user-signingkey: true
           git-commit-gpgsign: true
 
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            ghcr.io/silicer/v2ray-core
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ env.VERSION }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
@@ -93,9 +104,8 @@ jobs:
           platforms: linux/amd64, linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache/sagernet-v2ray-core
           cache-to: type=local,dest=/tmp/.buildx-cache/sagernet-v2ray-core-new,mode=max
-          tags: |
-            silicer/v2ray-core:latest
-            silicer/v2ray-core:${{ env.VERSION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Post build and push
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
