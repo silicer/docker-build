@@ -1,6 +1,7 @@
 FROM alpine:latest
 
 ARG TARGETARCH
+ENV V2RAY_LOCATION_ASSET /usr/local/share/v2ray
 WORKDIR /root
 
 RUN apk add --no-cache --update --quiet --no-progress tzdata && \
@@ -18,4 +19,5 @@ RUN chmod +x v2ray && \
     rm -rf ./*
 
 VOLUME /etc/v2ray
+
 ENTRYPOINT ["/usr/bin/v2ray", "run", "-config", "/etc/v2ray/config.json"]
