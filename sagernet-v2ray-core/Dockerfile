@@ -18,4 +18,4 @@ RUN chmod +x v2ray && \
     rm -rf ./*
 
 VOLUME /etc/v2ray
-ENTRYPOINT ["/usr/bin/v2ray", "-config", "/etc/v2ray/config.json"]
+ENTRYPOINT ["/usr/bin/v2ray", "run", "-config", "/etc/v2ray/config.json"]
