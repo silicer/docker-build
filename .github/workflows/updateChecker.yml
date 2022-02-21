@@ -15,7 +15,7 @@ env:
 jobs:
   go-cqhttp:
     runs-on: ubuntu-latest
-    if: ${{env.GO-CQHTTP}} == 'true'
+    if: ${{ env.GO-CQHTTP }} == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -44,7 +44,7 @@ jobs:
 
   iBiliplayer:
     runs-on: ubuntu-latest
-    if: ${{env.IBILIPLAYER}} == 'true'
+    if: ${{ env.IBILIPLAYER }} == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -78,7 +78,7 @@ jobs:
 
   ELF_RSS:
     runs-on: ubuntu-latest
-    if: ${{env.ELFRSS}} == 'true'
+    if: ${{ env.ELFRSS }} == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -108,7 +108,7 @@ jobs:
 
   cq-picsearcher-bot:
     runs-on: ubuntu-latest
-    if: ${{env.CQ}} == 'true'
+    if: ${{ env.CQ }} == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -136,7 +136,7 @@ jobs:
 
   caddy:
     runs-on: ubuntu-latest
-    if: ${{env.CADDY}} == 'true'
+    if: ${{ env.CADDY }} == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -165,7 +165,7 @@ jobs:
 
   v2ray:
     runs-on: ubuntu-latest
-    if: ${{env.V2RAY}} == 'true'
+    if: ${{ env.V2RAY }} == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
