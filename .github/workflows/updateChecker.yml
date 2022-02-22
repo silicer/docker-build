@@ -43,7 +43,7 @@ jobs:
 
   iBiliplayer:
     runs-on: ubuntu-latest
-    if: ${{ env.IBILIPLAYER }} == 'true'
+    if: 'false'
     steps:
       - name: Checkout
         uses: actions/checkout@v2
