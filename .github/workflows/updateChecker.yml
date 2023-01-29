@@ -37,7 +37,7 @@ jobs:
           fi
 
       - name: 触发更新
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         # if: steps.checker.outputs.ifUpdated == 'true'
         if: env.gocqhttp_ifUpdated == 'true'
         with:
@@ -73,7 +73,7 @@ jobs:
           fi
 
       - name: 触发更新
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         if: steps.checker.outputs.ifUpdated == 'true'
         with:
           token: ${{ secrets.ACTIONS_TRIGGER }}
@@ -106,7 +106,7 @@ jobs:
           fi
 
       - name: 触发更新
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         # if: steps.checker.outputs.ifUpdated == 'true'
         if: env.elfrss_ifUpdated == 'true'
         with:
@@ -138,7 +138,7 @@ jobs:
           fi
 
       - name: 触发更新
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         # if: steps.checker.outputs.ifUpdated == 'true'
         if: env.cqpic_ifUpdated == 'true'
         with:
@@ -171,7 +171,7 @@ jobs:
           fi
 
       - name: 触发更新
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         # if: steps.checker.outputs.ifUpdated == 'true'
         if: env.caddy_ifUpdated == 'true'
         with:
@@ -204,7 +204,7 @@ jobs:
           fi
         
       - name: 触发更新
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         # if: steps.checker.outputs.ifUpdated == 'true'
         if: env.v2ray_ifUpdated == 'true'
         with:
