@@ -27,7 +27,7 @@ jobs:
         id: checker
         run: |
           cd ELF_RSS
-          awk '{ sub(/nonebot2/, "nonebot2[fastapi]"); print $0 }' ./ELF_RSS/requirements.txt | tee ./ELF_RSS/requirements.txt
+          awk '{ sub(/nonebot2/, "nonebot2[fastapi]"); print $0 > "./ELF_RSS/requirements.txt" }' ./ELF_RSS/requirements.txt
           cat ./ELF_RSS/requirements.txt
           if [ "${{ env.VERSION }}" ]; then
             echo "${{ env.VERSION }}" > ./version
