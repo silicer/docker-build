@@ -1,4 +1,4 @@
-FROM node:lts-bullseye-slim
+FROM node:16-bullseye-slim
 
 # 设置时区
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
@@ -10,7 +10,8 @@ RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 COPY cq-picsearcher-bot /cq-picsearcher-bot
 WORKDIR /cq-picsearcher-bot
 
-RUN yarn
+RUN yarn --production
+RUN cp /cq-picsearcher-bot/config.default.jsonc /cq-picsearcher-bot/config.jsonc
 VOLUME /cq-picsearcher-bot/data
 VOLUME /cq-picsearcher-bot/config.jsonc
 
