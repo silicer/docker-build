@@ -6,7 +6,7 @@ ARG TARGETARCH
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \
-            apt-get -qq update && apt-get -qq install gcc g++ python3; \
+            apt-get -qq update && apt-get -qq install build-essential python3; \
         fi
 # RUN apk add --no-cache --update tzdata && \
 #     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
@@ -22,7 +22,7 @@ VOLUME /cq-picsearcher-bot/data
 VOLUME /cq-picsearcher-bot/config.jsonc
 
 RUN if [ "${TARGETARCH}" = "arm64" ]; then \
-            apt-get -qq remove gcc g++ python3 && apt-get -qq autoremove; \
+            apt-get -qq remove build-essential python3 && apt-get -qq autoremove; \
         fi
 
 EXPOSE 2333
