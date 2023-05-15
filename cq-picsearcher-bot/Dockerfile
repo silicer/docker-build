@@ -1,5 +1,7 @@
 FROM node:16-bullseye-slim
 
+ARG TARGETARCH
+
 # 设置时区
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
