@@ -27,6 +27,11 @@ RUN mkdir -p /usr/src \
     && mkdir -p /usr/src/boringssl/build \
     && cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     && make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN) \
+    && mkdir -p "/usr/src/boringssl/.openssl/lib" \
+    && cd "/usr/src/boringssl/.openssl" \
+    && ln -s ../include \
+    && cd "/usr/src/boringssl" \
+    && cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib" \
     && wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz \
     && wget https://github.com/yaoweibin/ngx_http_substitutions_filter_module/archive/refs/heads/master.tar.gz -O nginx_substitutions_filter.tar.gz \
     && tar -zxC /usr/src -f nginx.tar.gz \
