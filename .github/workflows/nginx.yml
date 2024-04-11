@@ -1,4 +1,4 @@
-name: Build and push
+name: Nginx Image Build
 
 on:
   workflow_dispatch:
