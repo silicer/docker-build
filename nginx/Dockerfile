@@ -37,7 +37,8 @@ RUN mkdir -p /usr/src \
     && git clone --recurse-submodules -j2 https://github.com/arut/nginx-dav-ext-module /usr/src/ngx_dav_ext_module \
     && git clone --recurse-submodules -j2 https://github.com/openresty/headers-more-nginx-module /usr/src/headers_more_nginx_module \
     && cd /usr/src/nginx-$NGINX_VERSION \
-    && ./configure $(nginx -V 2>&1 | sed -n -e "s/^.*configure arguments: //p")  --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master --add-dynamic-module=/usr/src/ngx_brotli --add-dynamic-module=/usr/src/ngx_dav_ext_module --add-dynamic-module=/usr/src/headers_more_nginx_module --with-cc-opt="-I/usr/src/boringssl/include" --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" \
+    # && bash -c 'set -eux && eval ./configure $(nginx -V 2>&1 | sed -n -e "s/^.*configure arguments: //p") --with-cc-opt="-I/usr/src/boringssl/.openssl/include" --with-ld-opt="-L/usr/src/boringssl/.openssl/lib" --with-cc-opt="-I/usr/src/boringssl/include" --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master --add-dynamic-module=/usr/src/ngx_brotli --add-dynamic-module=/usr/src/ngx_dav_ext_module --add-dynamic-module=/usr/src/headers_more_nginx_module' \
+    && bash -c 'set -eux && eval "./configure $(nginx -V 2>&1 | sed -n -e \"s/^.*configure arguments: //p\") --with-cc-opt=\"-I/usr/src/boringssl/.openssl/include\" --with-ld-opt=\"-L/usr/src/boringssl/.openssl/lib\" --with-cc-opt=\"-I/usr/src/boringssl/include\" --with-ld-opt=\"-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto\" --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master --add-dynamic-module=/usr/src/ngx_brotli --add-dynamic-module=/usr/src/ngx_dav_ext_module --add-dynamic-module=/usr/src/headers_more_nginx_module"' \
     && make -j$(getconf _NPROCESSORS_ONLN)\
     && make install
 
