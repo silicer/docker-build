@@ -5,28 +5,28 @@ FROM nginx:alpine AS builder
 # For latest build deps, see https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
 RUN apk add --no-cache --virtual .build-deps \
         alpine-sdk \
-        autoconf \
-        automake \
+        # autoconf \
+        # automake \
         bash \
-        bind-tools \
-        binutils \
-        build-base \
-        ca-certificates \
+        # bind-tools \
+        # binutils \
+        # build-base \
+        # ca-certificates \
         cmake \
-        curl \
+        # curl \
         findutils \
         gcc \
         gd-dev \
         geoip-dev \
-        go \
+        # go \
         libc-dev \
-        libgcc \
+        # libgcc \
         libedit-dev \
-        libstdc++ \
+        # libstdc++ \
         libxslt-dev \
         linux-headers \
         make \
-        openssl \
+        # openssl \
         openssl-dev \
         pcre2-dev \
         perl-dev \
@@ -35,8 +35,8 @@ RUN apk add --no-cache --virtual .build-deps \
 RUN mkdir -p /usr/src \
     && git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
     && cd /usr/src/boringssl \
-    && (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
-    && (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
+    # && (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
+    # && (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
     && mkdir -p /usr/src/boringssl/build \
     # && cd /usr/src/boringssl/build \
     && cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
