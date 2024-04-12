@@ -19,19 +19,21 @@ RUN apk add --no-cache --virtual .build-deps \
       openssl-dev \
       pcre2-dev \
       perl-dev \
-      zlib-dev
+      zlib-dev \
+      openssl
 
 RUN mkdir -p /usr/src \
     && git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
     && cd /usr/src/boringssl \
     && mkdir -p /usr/src/boringssl/build \
-    && cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    && make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN) \
-    && mkdir -p "/usr/src/boringssl/.openssl/lib" \
-    && cd "/usr/src/boringssl/.openssl" \
-    && ln -s ../include \
-    && cd "/usr/src/boringssl" \
-    && cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib" \
+    && cd /usr/src/boringssl/build && cmake .. && make \
+    # && cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    # && make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN) \
+    # && mkdir -p "/usr/src/boringssl/.openssl/lib" \
+    # && cd "/usr/src/boringssl/.openssl" \
+    # && ln -s ../include \
+    # && cd "/usr/src/boringssl" \
+    # && cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib" \
     && wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz \
     && wget https://github.com/yaoweibin/ngx_http_substitutions_filter_module/archive/refs/heads/master.tar.gz -O nginx_substitutions_filter.tar.gz \
     && tar -zxC /usr/src -f nginx.tar.gz \
@@ -43,10 +45,10 @@ RUN mkdir -p /usr/src \
     && git clone --recurse-submodules -j2 https://github.com/openresty/headers-more-nginx-module /usr/src/headers_more_nginx_module \
     && cd /usr/src/nginx-$NGINX_VERSION \
     # && bash -c 'set -eux && eval ./configure $(nginx -V 2>&1 | sed -n -e "s/^.*configure arguments: //p") --with-cc-opt="-I/usr/src/boringssl/.openssl/include" --with-ld-opt="-L/usr/src/boringssl/.openssl/lib" --with-cc-opt="-I/usr/src/boringssl/include" --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto" --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master --add-dynamic-module=/usr/src/ngx_brotli --add-dynamic-module=/usr/src/ngx_dav_ext_module --add-dynamic-module=/usr/src/headers_more_nginx_module' \
-    && bash -c 'set -eux && eval "./configure $(nginx -V 2>&1 | sed -n -e "s/^.*configure arguments: //p") --with-openssl=\"/usr/src/boringssl\" --with-cc-opt=\"-I/usr/src/boringssl/.openssl/include\" --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master --add-dynamic-module=/usr/src/ngx_brotli --add-dynamic-module=/usr/src/ngx_dav_ext_module --add-dynamic-module=/usr/src/headers_more_nginx_module"' \
-    && mkdir -p /usr/src/boringssl/.openssl/include/openssl/ \
-    && touch /usr/src/boringssl/.openssl/include/openssl/ssl.h \
-    && make -j$(getconf _NPROCESSORS_ONLN)\
+    && bash -c 'set -eux && eval "./configure $(nginx -V 2>&1 | sed -n -e "s/^.*configure arguments: //p") --with-cc-opt=\"-I/usr/src/boringssl/include\" --with-ld-opt=\"-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto\" --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master --add-dynamic-module=/usr/src/ngx_brotli --add-dynamic-module=/usr/src/ngx_dav_ext_module --add-dynamic-module=/usr/src/headers_more_nginx_module"' \
+    # && mkdir -p /usr/src/boringssl/.openssl/include/openssl/ \
+    # && touch /usr/src/boringssl/.openssl/include/openssl/ssl.h \
+    && make \
     && make install
 
 FROM nginx:alpine
