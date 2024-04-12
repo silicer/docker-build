@@ -69,7 +69,8 @@ COPY --from=builder /usr/lib/nginx/modules/* /usr/lib/nginx/modules/
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
 
-RUN sed -i '1iload_module /usr/lib/nginx/modules/ngx_http_subs_filter_module.so;\n' /etc/nginx/nginx.conf
+RUN sed -i '1iload_module /usr/lib/nginx/modules/ngx_http_subs_filter_module.so;\n' /etc/nginx/nginx.conf \
+    && apk add --no-cache --virtual .nginx-rundeps libstdc++
 
 EXPOSE 80
 STOPSIGNAL SIGTERM
