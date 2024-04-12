@@ -4,31 +4,43 @@ FROM nginx:alpine AS builder
 
 # For latest build deps, see https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
 RUN apk add --no-cache --virtual .build-deps \
-      alpine-sdk \
-      bash \
-      cmake \
-      findutils \
-      gcc \
-      gd-dev \
-      geoip-dev \
-      libc-dev \
-      libedit-dev \
-      libxslt-dev \
-      linux-headers \
-      make \
-      openssl-dev \
-      pcre2-dev \
-      perl-dev \
-      zlib-dev \
-      openssl
+        alpine-sdk \
+        autoconf \
+        automake \
+        bash \
+        bind-tools \
+        binutils \
+        build-base \
+        ca-certificates
+        cmake \
+        curl \
+        findutils \
+        gcc \
+        gd-dev \
+        geoip-dev \
+        go \
+        libc-dev \
+        libgcc \
+        libedit-dev \
+        libstdc++ \
+        libxslt-dev \
+        linux-headers \
+        make \
+        openssl \
+        openssl-dev \
+        pcre2-dev \
+        perl-dev \
+        zlib-dev
 
 RUN mkdir -p /usr/src \
     && git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl \
     && cd /usr/src/boringssl \
+    && (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) \
+    && (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) \
     && mkdir -p /usr/src/boringssl/build \
-    && cd /usr/src/boringssl/build && cmake .. && make \
-    # && cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    # && make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN) \
+    # && cd /usr/src/boringssl/build \
+    && cmake -B/usr/src/boringssl/build -S/usr/src/boringssl -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    && make -C/usr/src/boringssl/build \
     # && mkdir -p "/usr/src/boringssl/.openssl/lib" \
     # && cd "/usr/src/boringssl/.openssl" \
     # && ln -s ../include \
