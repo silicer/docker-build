@@ -11,7 +11,7 @@ RUN apk add --no-cache --virtual .build-deps \
         bind-tools \
         binutils \
         build-base \
-        ca-certificates
+        ca-certificates \
         cmake \
         curl \
         findutils \
