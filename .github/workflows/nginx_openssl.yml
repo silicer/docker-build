@@ -37,8 +37,9 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            silicer/nginx:openssl
+            silicer/nginx
           tags: |
+            type=raw,openssl
             type=sha
             type=ref,event=tag
             type=semver,pattern={{version}}
@@ -46,7 +47,7 @@ jobs:
             type=semver,pattern={{major}}
             type=schedule
           flavor: |
-            latest=auto
+            latest=false
 
       - name: Build and push
         id: docker_build
