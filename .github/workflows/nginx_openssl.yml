@@ -1,0 +1,68 @@
+name: Nginx (OpenSSL) Image Build
+
+on:
+  workflow_dispatch:
+
+env:
+  TARGET_PLATFORMS: linux/amd64,linux/arm/v7,linux/arm64/v8
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+            username: ${{ secrets.DOCKER_USER_NAME }}
+            password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: ${{ env.TARGET_PLATFORMS }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Docker metadata
+        id: docker_metadata
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            silicer/nginx:openssl
+          tags: |
+            type=sha
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=schedule
+          flavor: |
+            latest=auto
+
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v4
+        with:
+          context: ./nginx
+          file: Dockerfile.openssl
+          platforms: ${{ env.TARGET_PLATFORMS }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.docker_metadata.outputs.tags }}
+          labels: ${{ steps.docker_metadata.outputs.labels }}
+          outputs: |
+            type=local,dest=/tmp/output
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: output-artifact
+          path: /tmp/output
