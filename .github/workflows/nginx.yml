@@ -53,7 +53,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: ./nginx
-        #   file: ./Dockerfile
+          file: ./nginx/Dockerfile.boringssl
           platforms: ${{ env.TARGET_PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
