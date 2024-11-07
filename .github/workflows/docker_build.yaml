@@ -1,0 +1,122 @@
+name: Docker 镜像构建
+on:
+  repository_dispatch:
+    types: [build_docker]
+  workflow_dispatch:
+
+env:
+  NAME: ${{ github.event.client_payload.name }}
+  PLATFORMS: ${{ github.event.client_payload.platforms }}
+  REPO: ${{ github.event.client_payload.repo }}
+  VERSION: ${{ github.event.client_payload.version }}
+  LATEST: ${{ github.event.client_payload.latest }}
+  PREFIX: ${{ github.event.client_payload.prefix }}
+  SUFFIX: ${{ github.event.client_payload.suffix }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set time zone
+        uses: szenius/set-timezone@v2.0
+        with:
+          timezoneLinux: "Asia/Shanghai"
+          timezoneMacos: "Asia/Shanghai"
+          timezoneWindows: "China Standard Time"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 更新版本号
+        id: checker
+        run: |
+          if [ "${{ env.VERSION }}" ]; then
+            echo ${{ env.VERSION }} > ${{ env.NAME }}/version
+          else
+            echo "VERSION=$(cat ${{ env.NAME }}/version)" >> $GITHUB_ENV
+          fi
+
+      - name: Import GPG Key
+        if: github.event_name != 'workflow_dispatch'
+        id: import_gpg
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: Set up cache
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache/${{ env.NAME }}
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            silicer/${{ env.NAME }}
+          tags: |
+            type=raw,value=${{ env.VERSION }},
+            type=sha
+          flavor:
+            latest=${{ env.LATEST }}
+            prefix=${{ env.PREFIX }}
+            suffix=${{ env.SUFFIX }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        with:
+          push: true
+          context: ./${{ env.NAME }}
+          platforms: linux/amd64, linux/arm64
+          cache-from: type=local,src=/tmp/.buildx-cache/${{ env.NAME }}
+          cache-to: type=local,dest=/tmp/.buildx-cache/${{ env.NAME }}-new,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Post build and push
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        run: |
+          rm -rf /tmp/.buildx-cache/${{ env.NAME }}
+          mv /tmp/.buildx-cache/${{ env.NAME }}-new /tmp/.buildx-cache/${{ env.NAME }}
+
+      - name: commit
+        if: github.event_name != 'workflow_dispatch'
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        run: |
+          git config --global user.email ${{ secrets.mail }}
+          git config --global user.name ${{ secrets.username }}
+          git add .
+          tIme=$(env TZ=Asia/Shanghai date "+%Y-%m-%d %H:%M:%S")
+          git commit -S -m "${{ env.NAME }} built and updated at ${tIme} UTC+8" -a
+
+      - name: Push changes
+        if: github.event_name != 'workflow_dispatch'
+        # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master

@@ -2,213 +2,26 @@ name: 更新检测器
 on:
   workflow_dispatch:
   schedule:
-    - cron: 0 */4 * * *
-
-env:
-  GO-CQHTTP: 'true'
-  IBILIPLAYER: 'false'
-  ELFRSS: 'true'
-  CQ: 'true'
-  CADDY: 'true'
-  V2RAY: 'true'
+    - cron: '0 */4 * * *'
 
 jobs:
-  go-cqhttp:
+  update_checker:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: 检测 go-cqhttp 最新版本号
-        id: checker
-        run: |
-          cd go-cqhttp
-          latestCommit=$(curl -sSL https://api.github.com/repos/Mrs4s/go-cqhttp/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          lastCommit=$(cat ./version || echo "NULL")
-          if
-            [[ -z ${latestCommit} || ${latestCommit} = ${lastCommit} ]]
-          then
-            # echo "::set-output name=ifUpdated::false"
-            echo "gocqhttp_ifUpdated=false" >> $GITHUB_ENV
-          else
-            # echo "::set-output name=ifUpdated::true"  && echo "::set-output name=version::${latestCommit}"
-            echo "gocqhttp_ifUpdated=true" >> $GITHUB_ENV
-            echo "gocqhttp_version=${latestCommit}" >> $GITHUB_ENV
-          fi
-
-      - name: 触发更新
-        uses: peter-evans/repository-dispatch@v2
-        # if: steps.checker.outputs.ifUpdated == 'true'
-        if: env.gocqhttp_ifUpdated == 'true'
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          token: ${{ secrets.ACTIONS_TRIGGER }}
-          event-type: go-cqhttp
-          # client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
-          client-payload: '{"version": "${{ env.gocqhttp_version }}"}'
+          python-version: '3.x'
 
-  iBiliplayer:
-    runs-on: ubuntu-latest
-    if: 'false'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: pip install PyYAML requests feedparser
 
-      - name: 安装 xmllint
-        run: sudo apt-get install libxml2-utils -y
-
-      - name: 检测哔哩哔哩HD最新版本
-        id: checker
+      - name: Run update checker script
+        env:
+          ACTIONS_TRIGGER: ${{ secrets.ACTIONS_TRIGGER }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd iBiliplayer
-          metaData=$(curl -sSL https://dl.love4taylor.com/bilibili-apk/hd/rss.php |
-              xmllint --xpath "/rss/channel/item[1]" -)
-          versionName=$(echo ${metaData} | xmllint --xpath "string(//title)" -)
-          downloadAddress=$(echo ${metaData} | xmllint --xpath "string(//guid)" -)
-          if [[ ${versionName} != $(cat ./version || echo "NULL") ]]; then
-              echo "::set-output name=ifUpdated::true"
-              echo "::set-output name=apk::${versionName}"
-              echo "::set-output name=dlLink::${downloadAddress}"
-          else
-              echo "::set-output name=ifUpdated::false"
-          fi
-
-      - name: 触发更新
-        uses: peter-evans/repository-dispatch@v2
-        if: steps.checker.outputs.ifUpdated == 'true'
-        with:
-          token: ${{ secrets.ACTIONS_TRIGGER }}
-          event-type: iBiliplayer
-          client-payload: '{"apk": "${{ steps.checker.outputs.apk }}", "dlLink": "${{ steps.checker.outputs.dlLink }}" }'
-
-  ELF_RSS:
-    runs-on: ubuntu-latest
-    # if: 'false'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: 检测 Quan666/ELFRSS 最新提交
-        id: checker
-        run: |
-          git clone https://github.com/Quan666/ELF_RSS ./ELF_RSS/ELF_RSS
-          cd ELF_RSS
-          latestCommit=$(cd ./ELF_RSS && git log -1 --pretty=format:"%H")
-          lastCommit=$(cat ./version || echo "NULL")
-          if
-            [[ -z ${latestCommit} || ${latestCommit} = ${lastCommit} ]]
-          then
-            # echo "::set-output name=ifUpdated::false"
-            echo "elfrss_ifUpdated=false" >> $GITHUB_ENV
-          else
-            # echo "::set-output name=ifUpdated::true" && echo "::set-output name=version::${latestCommit}"
-            echo "elfrss_ifUpdated=true" >> $GITHUB_ENV
-            echo "elfrss_version=${latestCommit}" >> $GITHUB_ENV
-          fi
-
-      - name: 触发更新
-        uses: peter-evans/repository-dispatch@v2
-        # if: steps.checker.outputs.ifUpdated == 'true'
-        if: env.elfrss_ifUpdated == 'true'
-        with:
-          token: ${{ secrets.ACTIONS_TRIGGER }}
-          event-type: ELF_RSS
-          # client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
-          client-payload: '{"version": "${{ env.elfrss_version }}"}'
-
-  cq-picsearcher-bot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: 检测 Tsuk1ko/cq-picsearch-bot 最新提交
-        id: checker
-        run: |
-          git clone https://github.com/Tsuk1ko/cq-picsearcher-bot ./cq-picsearcher-bot/cq-picsearcher-bot
-          cd cq-picsearcher-bot
-          latestCommit=$(cd ./cq-picsearcher-bot && git log -1 --pretty=format:"%H")
-          lastCommit=$(cat ./version || echo "NULL")
-          if [[ -z ${latestCommit} || ${latestCommit} = ${lastCommit} ]]; then
-            # echo "::set-output name=ifUpdated::false"
-            echo "cqpic_ifUpdated=false" >> $GITHUB_ENV
-          else
-            # echo "::set-output name=ifUpdated::true" && echo "::set-output name=version::${latestCommit}"
-            echo "cqpic_ifUpdated=true" >> $GITHUB_ENV
-            echo "cqpic_version=${latestCommit}" >> $GITHUB_ENV
-          fi
-
-      - name: 触发更新
-        uses: peter-evans/repository-dispatch@v2
-        # if: steps.checker.outputs.ifUpdated == 'true'
-        if: env.cqpic_ifUpdated == 'true'
-        with:
-          token: ${{ secrets.ACTIONS_TRIGGER }}
-          event-type: cq-picsearcher-bot
-          # client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
-          client-payload: '{"version": "${{ env.cqpic_version }}"}'
-
-  caddy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: 检测 caddy 最新版本号
-        id: checker
-        run: |
-          cd caddy
-          latestCommit=$(curl -sSL https://api.github.com/repos/caddyserver/caddy/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          lastCommit=$(cat ./version || echo "NULL")
-          if
-            [[ -z ${latestCommit} || ${latestCommit} = ${lastCommit} ]]
-          then
-            # echo "::set-output name=ifUpdated::false"
-            echo "caddy_ifUpdated=false" >> $GITHUB_ENV
-          else
-            # echo "::set-output name=ifUpdated::true"  && echo "::set-output name=version::${latestCommit}"
-            echo "caddy_ifUpdated=true" >> $GITHUB_ENV
-            echo "caddy_version=${latestCommit}" >> $GITHUB_ENV
-          fi
-
-      - name: 触发更新
-        uses: peter-evans/repository-dispatch@v2
-        # if: steps.checker.outputs.ifUpdated == 'true'
-        if: env.caddy_ifUpdated == 'true'
-        with:
-          token: ${{ secrets.ACTIONS_TRIGGER }}
-          event-type: caddy
-          # client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
-          client-payload: '{"version": "${{ env.caddy_version }}"}'
-
-  v2ray:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: 检测 SagerNet/v2ray-core 最新版本号
-        id: checker
-        run: |
-          cd sagernet-v2ray-core
-          latestCommit=$(curl -sSL https://api.github.com/repos/SagerNet/v2ray-core/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          lastCommit=$(cat ./version || echo "NULL")
-          if
-            [[ -z ${latestCommit} || ${latestCommit} = ${lastCommit} ]]
-          then
-            # echo "::set-output name=ifUpdated::false"
-            echo "v2ray_ifUpdated=false" >> $GITHUB_ENV
-          else
-            # echo "::set-output name=ifUpdated::true"  && echo "::set-output name=version::${latestCommit}"
-            echo "v2ray_ifUpdated=true" >> $GITHUB_ENV
-            echo "v2ray_version=${latestCommit}" >> $GITHUB_ENV
-          fi
-        
-      - name: 触发更新
-        uses: peter-evans/repository-dispatch@v2
-        # if: steps.checker.outputs.ifUpdated == 'true'
-        if: env.v2ray_ifUpdated == 'true'
-        with:
-          token: ${{ secrets.ACTIONS_TRIGGER }}
-          event-type: v2ray
-          # client-payload: '{"version": "${{ steps.checker.outputs.version }}"}'
-          client-payload: '{"version": "${{ env.v2ray_version }}"}'
+          python update_checker.py
