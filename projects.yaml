@@ -1,0 +1,38 @@
+projects:
+  - name: go-cqhttp
+    enabled: false
+    repo_url: https://github.com/Mrs4s/go-cqhttp
+    check_type: github_release
+    event_type: build_docker
+  - name: iBiliplayer
+    enabled: false
+    repo_url: https://dl.love4taylor.com/bilibili-apk/hd/rss.php
+    check_type: rss_feed
+    event_type: iBiliplayer
+  - name: ELF_RSS
+    enabled: true
+    push: true
+    repo_url: https://github.com/Quan666/ELF_RSS
+    check_type: git_commit
+    event_type: build_docker
+  - name: cq-picsearcher-bot
+    enabled: false
+    repo_url: https://github.com/Tsuk1ko/cq-picsearcher-bot
+    check_type: git_commit
+    event_type: build_docker
+  - name: caddy
+    enabled: true
+    repo_url: https://github.com/caddyserver/caddy
+    check_type: github_release
+    event_type: build_docker
+  - name: v2ray
+    enabled: false
+    repo_url: https://github.com/SagerNet/v2ray-core
+    check_type: github_release
+    event_type: build_docker
+  - name: sing-box-subscribe
+    enabled: true
+    push: false
+    repo_url: https://github.com/Toperlock/sing-box-subscribe
+    check_type: github_release
+    event_type: build_docker
