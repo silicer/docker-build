@@ -1,4 +1,4 @@
-FROM alpine/git:latest as fetcher
+FROM alpine/git:latest AS fetcher
 
 RUN git clone --depth 1 https://github.com/Toperlock/sing-box-subscribe.git /sing-box-subscribe
 
