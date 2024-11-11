@@ -96,7 +96,10 @@ jobs:
           tags: |
             type=raw,value=${{ env.VERSION }},
             type=sha
-          flavor: latest=${{ env.LATEST }} prefix=${{ env.PREFIX }} suffix=${{ env.SUFFIX }}
+          flavor: |
+            latest=${{ env.LATEST }}
+            prefix=${{ env.PREFIX }}
+            suffix=${{ env.SUFFIX }}
       - name: Build and push
         uses: docker/build-push-action@v6
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
