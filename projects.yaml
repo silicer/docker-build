@@ -11,6 +11,7 @@ projects:
     event_type: iBiliplayer
   - name: ELF_RSS
     enabled: true
+    push: true
     repo_url: https://github.com/Quan666/ELF_RSS
     check_type: git_commit
     event_type: build_docker
@@ -31,6 +32,7 @@ projects:
     event_type: build_docker
   - name: sing-box-subscribe
     enabled: true
+    push: false
     repo_url: https://github.com/Toperlock/sing-box-subscribe
     check_type: github_release
     event_type: build_docker
