@@ -32,7 +32,7 @@ jobs:
             config = yaml.safe_load(f)
           projects = config["projects"]
           for project in projects:
-            if project["name"] == ${{ env.NAME }}:
+            if project["name"] == "${{ env.NAME }}":
               break
           env_string = ""
           env_string += "PLATFORMS=" + project.get("platforms", "linux/amd64") + "\n"
