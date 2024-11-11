@@ -36,8 +36,8 @@ jobs:
               break
           env_string = ""
           env_string += "PLATFORMS=" + project.get("platforms", "linux/amd64") + "\n"
-          env_string += "PUSH=" + project.get("push", "false") + "\n"
-          env_string += "LATEST=" + project.get("latest", "true") + "\n"
+          env_string += "PUSH=" + str(project.get("push", "false")).lower() + "\n"
+          env_string += "LATEST=" + str(project.get("latest", "true")).lower() + "\n"
           env_string += "PREFIX=" + project.get("prefix", "") + "\n"
           env_string += "SUFFIX=" + project.get("suffix", "") + "\n"
           env_string += "EXTRASTEPS=" + project.get("extraSteps", "") + "\n"
