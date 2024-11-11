@@ -29,7 +29,8 @@ jobs:
         run: |
           import os, yaml
           with open("projects.yaml", "r", encoding="utf-8") as f:
-            projects = yaml.safe_load(f)
+            config = yaml.safe_load(f)
+          projects = config["projects"]
           for project in projects:
             if project["name"] == ${{ env.NAME }}:
               break
