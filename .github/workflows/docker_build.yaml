@@ -40,7 +40,7 @@ jobs:
           env_string += "LATEST=" + str(project.get("latest", "true")).lower() + "\n"
           env_string += "PREFIX=" + project.get("prefix", "") + "\n"
           env_string += "SUFFIX=" + project.get("suffix", "") + "\n"
-          env_string += "EXTRASTEPS=" + project.get("extraSteps", "") + "\n"
+          env_string += "EXTRASTEPS=" + project.get("extraSteps", "''") + "\n"
 
           with open(os.getenv("GITHUB_ENV"), "a") as f:
             f.write(env_string)
