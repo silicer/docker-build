@@ -12,6 +12,7 @@ projects:
   - name: ELF_RSS
     enabled: true
     push: true
+    platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
     repo_url: https://github.com/Quan666/ELF_RSS
     check_type: git_commit
     event_type: build_docker
@@ -22,6 +23,8 @@ projects:
     event_type: build_docker
   - name: caddy
     enabled: true
+    push: true
+    platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
     repo_url: https://github.com/caddyserver/caddy
     check_type: github_release
     event_type: build_docker
@@ -36,3 +39,4 @@ projects:
     repo_url: https://github.com/Toperlock/sing-box-subscribe
     check_type: github_release
     event_type: build_docker
+    

@@ -35,6 +35,7 @@ jobs:
             if project["name"] == "${{ env.NAME }}":
               break
           env_string = ""
+          env_string += "DOCKERFILEPATH=" + project.get("docker_file_path", "./${{ env.NAME }}/Dockerfile") + "\n"
           env_string += "PLATFORMS=" + project.get("platforms", "linux/amd64") + "\n"
           env_string += "PUSH=" + str(project.get("push", "false")).lower() + "\n"
           env_string += "LATEST=" + str(project.get("latest", "true")).lower() + "\n"
@@ -107,6 +108,7 @@ jobs:
         with:
           push: ${{ env.PUSH }}
           context: ./${{ env.NAME }}
+          file: ${{ env.DOCKERFILEPATH }}
           platforms: ${{ env.PLATFORMS }}
           cache-from: type=local,src=/tmp/.buildx-cache/${{ env.NAME }}
           cache-to: type=local,dest=/tmp/.buildx-cache/${{ env.NAME }}-new,mode=max
