@@ -17,6 +17,7 @@ RUN apk add --no-cache --virtual .build-deps \
     libc-dev \
     libedit-dev \
     libxslt-dev \
+    libxml2-dev \
     linux-headers \
     make \
     openssl-dev \
@@ -46,6 +47,7 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
     wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch && \
     patch -p1 < Enable_BoringSSL_OCSP.patch && \
     ./configure $NGINX_CONFIG \
+        --with-cc=c++ \
         --with-cc-opt='-I/usr/src/boringssl/include' \
         --with-ld-opt='-L/usr/src/boringssl/build -lstdc++' \
         --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master \
