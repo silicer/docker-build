@@ -42,7 +42,6 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
     rm nginx.tar.gz && \
     rm nginx_substitutions_filter.tar.gz && \
     git clone --recurse-submodules -j2 https://github.com/google/ngx_brotli /usr/src/ngx_brotli && \
-    git clone --recurse-submodules -j2 https://github.com/arut/nginx-dav-ext-module /usr/src/ngx_dav_ext_module && \
     cd /usr/src/nginx-$NGINX_VERSION && \
     wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch && \
     patch -p1 < Enable_BoringSSL_OCSP.patch && \
@@ -51,8 +50,7 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
         --with-cc-opt='-I/usr/src/boringssl/include -x c -O2' \
         --with-ld-opt='-L/usr/src/boringssl/build -lstdc++' \
         --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master \
-        --add-dynamic-module=/usr/src/ngx_brotli \
-        --add-dynamic-module=/usr/src/ngx_dav_ext_module && \
+        --add-dynamic-module=/usr/src/ngx_brotli && \
     make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
     apk del .build-deps
