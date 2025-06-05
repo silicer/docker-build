@@ -19,8 +19,9 @@ RUN apk add --no-cache --virtual .build-deps \
     openssl-dev \
     pcre2-dev \
     perl-dev \
-    zlib-dev && \
-    mkdir -p /usr/src && \
+    zlib-dev
+
+RUN mkdir -p /usr/src && \
     git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl && \
     cd /usr/src/boringssl && \
     (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) && \
@@ -53,9 +54,8 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
             --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master \
             --add-dynamic-module=/usr/src/ngx_brotli \
             --add-dynamic-module=/usr/src/ngx_dav_ext_module \
-            --add-dynamic-module=/usr/src/headers_more_nginx_module"
-
-RUN make -j$(getconf _NPROCESSORS_ONLN) && \
+            --add-dynamic-module=/usr/src/headers_more_nginx_module" && \
+    make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
     apk del .build-deps
 
