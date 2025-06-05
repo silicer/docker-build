@@ -3,7 +3,7 @@
 FROM nginx:alpine AS builder
 
 RUN NGINX_CONFIG="$(nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p')" && \
-    echo 'Using nginx configure arguments: $NGINX_CONFIG'
+    echo "Using nginx configure arguments: $NGINX_CONFIG"
 
 # For latest build deps, see https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
 RUN apk add --no-cache --virtual .build-deps \
@@ -31,9 +31,7 @@ RUN mkdir -p /usr/src && \
     (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) && \
     mkdir -p /usr/src/boringssl/build && \
     cmake -B/usr/src/boringssl/build -S/usr/src/boringssl \
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-        -DENABLE_QUIC=ON \
-        -DUSE_LIBQUIC=ON && \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo && \
     make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN)
 
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz && \
@@ -44,7 +42,6 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
     rm nginx_substitutions_filter.tar.gz && \
     git clone --recurse-submodules -j2 https://github.com/google/ngx_brotli /usr/src/ngx_brotli && \
     git clone --recurse-submodules -j2 https://github.com/arut/nginx-dav-ext-module /usr/src/ngx_dav_ext_module && \
-    git clone --recurse-submodules -j2 https://github.com/openresty/headers-more-nginx-module /usr/src/headers_more_nginx_module && \
     cd /usr/src/nginx-$NGINX_VERSION && \
     wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch && \
     patch -p1 < Enable_BoringSSL_OCSP.patch && \
@@ -53,8 +50,7 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
         --with-ld-opt='-L/usr/src/boringssl/build -lstdc++' \
         --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master \
         --add-dynamic-module=/usr/src/ngx_brotli \
-        --add-dynamic-module=/usr/src/ngx_dav_ext_module \
-        --add-dynamic-module=/usr/src/headers_more_nginx_module && \
+        --add-dynamic-module=/usr/src/ngx_dav_ext_module && \
     make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
     apk del .build-deps
