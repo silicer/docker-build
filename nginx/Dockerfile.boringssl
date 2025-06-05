@@ -48,7 +48,7 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
     patch -p1 < Enable_BoringSSL_OCSP.patch && \
     ./configure $NGINX_CONFIG \
         --with-cc=c++ \
-        --with-cc-opt='-I/usr/src/boringssl/include' \
+        --with-cc-opt='-I/usr/src/boringssl/include -x c -O2' \
         --with-ld-opt='-L/usr/src/boringssl/build -lstdc++' \
         --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master \
         --add-dynamic-module=/usr/src/ngx_brotli \
