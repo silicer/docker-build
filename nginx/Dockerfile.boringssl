@@ -47,7 +47,6 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
     patch -p1 < Enable_BoringSSL_OCSP.patch && \
     bash -c "set -eux && \
         ./configure $(nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p') \
-            --with-openssl=/usr/src/boringssl \
             --with-cc=c++ \
             --with-cc-opt='-I/usr/src/boringssl/include -x c' \
             --with-ld-opt='-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -lssl -lcrypto' \
