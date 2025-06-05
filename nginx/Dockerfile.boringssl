@@ -44,16 +44,16 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
     cd /usr/src/nginx-$NGINX_VERSION && \
     wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch && \
     patch -p1 < Enable_BoringSSL_OCSP.patch && \
-    bash -c 'set -eux && \\
-        ./configure $(nginx -V 2>&1 | sed -n -e "s/^.*configure arguments: //p") \\
-            --with-openssl=/usr/src/boringssl \\
-            --with-cc=c++ \\
-            --with-cc-opt="-I/usr/src/boringssl/include -x c" \\
-            --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -lssl -lcrypto" \\
-            --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master \\
-            --add-dynamic-module=/usr/src/ngx_brotli \\
-            --add-dynamic-module=/usr/src/ngx_dav_ext_module \\
-            --add-dynamic-module=/usr/src/headers_more_nginx_module'
+    bash -c "set -eux && \
+        ./configure $(nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p') \
+            --with-openssl=/usr/src/boringssl \
+            --with-cc=c++ \
+            --with-cc-opt='-I/usr/src/boringssl/include -x c' \
+            --with-ld-opt='-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -lssl -lcrypto' \
+            --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master \
+            --add-dynamic-module=/usr/src/ngx_brotli \
+            --add-dynamic-module=/usr/src/ngx_dav_ext_module \
+            --add-dynamic-module=/usr/src/headers_more_nginx_module"
 
 RUN make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
