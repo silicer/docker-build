@@ -19,8 +19,7 @@ RUN apk add --no-cache --virtual .build-deps \
     openssl-dev \
     pcre2-dev \
     perl-dev \
-    zlib-dev \
-    libquic-dev && \
+    zlib-dev && \
     mkdir -p /usr/src && \
     git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl && \
     cd /usr/src/boringssl && \
