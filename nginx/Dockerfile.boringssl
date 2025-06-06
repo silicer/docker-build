@@ -1,6 +1,6 @@
 # Based on: https://gist.github.com/hermanbanken/96f0ff298c162a522ddbba44cad31081
 
-FROM nginx:alpine AS builder
+FROM nginx:stable-alpine AS builder
 
 RUN nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p' > /tmp/nginx_config.txt
 
