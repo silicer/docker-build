@@ -2,9 +2,10 @@
 
 FROM nginx:alpine AS builder
 
-ENV NGINX_CONFIG="$(nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p')"
+RUN nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p' > /tmp/nginx_config.txt
 
-RUN echo "Using nginx configure arguments: $NGINX_CONFIG"
+RUN NGINX_CONFIG=$(cat /tmp/nginx_config.txt) && \
+    echo "Using nginx configure arguments: $NGINX_CONFIG"
 
 # For latest build deps, see https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
 RUN apk add --no-cache --virtual .build-deps \
@@ -46,6 +47,7 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
     cd /usr/src/nginx-$NGINX_VERSION && \
     wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch && \
     patch -p1 < Enable_BoringSSL_OCSP.patch && \
+    NGINX_CONFIG=$(cat /tmp/nginx_config.txt) && \
     ./configure $NGINX_CONFIG \
         --with-cc=c++ \
         --with-cc-opt='-I/usr/src/boringssl/include -x c -O2' \
