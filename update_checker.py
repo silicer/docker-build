@@ -42,6 +42,40 @@ def get_latest_version(project):
             print(f"No entries found in RSS feed for {project['name']}")
             return None
 
+    elif check_type == "docker_hub":
+        repo_owner, repo_name = repo_url.split("/")
+        label = project.get("label")
+        api_url = f"https://hub.docker.com/v2/namespaces/{repo_owner}/repositories/{repo_name}/tags/"
+        response = requests.get(
+            api_url,
+            params={"platforms": True, "ordering": "last_updated", "name": label},
+        )
+        data = response.json()
+        tags = data.get("results", [])
+
+        arch = project.get("arch")
+
+        if label:
+            filtered_tags = [tag for tag in tags if tag["name"] == label]
+            if not filtered_tags:
+                return None
+
+            latest_tag = max(filtered_tags, key=lambda x: x["last_updated"])
+            return latest_tag["last_updated"]
+
+        if not arch:
+            if tags:
+                return tags[0]["name"]
+            else:
+                return None
+
+        for tag in tags:
+            for image in tag.get("images", []):
+                if image.get("architecture") == arch:
+                    return tag["name"]
+
+        return None
+
     else:
         print(f"Unknown check_type {check_type}")
         return None

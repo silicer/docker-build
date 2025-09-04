@@ -25,8 +25,9 @@ projects:
     enabled: true
     push: true
     platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
-    repo_url: https://github.com/caddyserver/caddy
-    check_type: github_release
+    repo_url: library/caddy
+    label: alpine
+    check_type: docker_hub
     event_type: build_docker
   - name: v2ray
     enabled: false
@@ -43,7 +44,8 @@ projects:
     enabled: true
     push: true
     platforms: linux/amd64,linux/arm/v7,linux/arm64/v8,linux/riscv64
-    repo_url: https://github.com/nginx/nginx
-    check_type: github_release
+    repo_url: library/nginx
+    label: mainline-alpine
+    check_type: docker_hub
     event_type: build_docker
     docker_file_path: ./nginx/Dockerfile.boringssl
