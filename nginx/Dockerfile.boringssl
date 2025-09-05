@@ -1,6 +1,6 @@
 # Based on: https://gist.github.com/hermanbanken/96f0ff298c162a522ddbba44cad31081
 
-FROM nginx:stable-alpine AS builder
+FROM nginx:mainline-alpine AS builder
 
 RUN nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p' > /tmp/nginx_config.txt
 
@@ -58,7 +58,7 @@ RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.g
     make install && \
     apk del .build-deps
 
-FROM nginx:stable-alpine
+FROM nginx:mainline-alpine
 
 COPY --from=builder /usr/lib/nginx/modules/* /usr/lib/nginx/modules/
 

@@ -1,6 +1,6 @@
 # Based on: https://gist.github.com/hermanbanken/96f0ff298c162a522ddbba44cad31081
 
-FROM nginx:alpine AS builder
+FROM nginx:mainline-alpine AS builder
 
 # For latest build deps, see https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
 RUN apk add --no-cache --virtual .build-deps \
@@ -53,7 +53,7 @@ COPY --from=builder /usr/lib/nginx/modules/* ./modules
 
 COPY --from=builder /usr/sbin/nginx ./
     
-FROM nginx:alpine
+FROM nginx:mainline-alpine
 
 COPY --from=builder /usr/lib/nginx/modules/* /usr/lib/nginx/modules/
 
