@@ -18,6 +18,8 @@ jobs:
           timezoneWindows: "China Standard Time"
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -130,6 +132,11 @@ jobs:
           git add .
           tIme=$(env TZ=Asia/Shanghai date "+%Y-%m-%d %H:%M:%S")
           git commit -S -m "${{ env.NAME }} built and updated at ${tIme} UTC+8" -a
+      - name: Rebase on latest master
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          git fetch origin master
+          git pull --rebase origin master
       - name: Push changes
         if: github.event_name != 'workflow_dispatch'
         # if: ${{ steps.checker.outputs.ifUpdated == 'true' }}
