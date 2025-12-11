@@ -3,8 +3,7 @@
 FROM nginx:mainline-alpine AS builder
 
 # 1. 安装构建依赖
-# 新增: go, ninja (编译现代 BoringSSL 必须)
-# 移除: openssl-dev (避免头文件冲突)
+# 必须包含 cmake, ninja (BoringSSL 推荐构建工具), go (BoringSSL 需要)
 RUN apk add --no-cache --virtual .build-deps \
     alpine-sdk \
     bash \
@@ -28,19 +27,24 @@ RUN apk add --no-cache --virtual .build-deps \
 
 WORKDIR /usr/src
 
-# 2. 获取 BoringSSL 并切换到最新 Tag
-# 逻辑：克隆 -> 获取所有 Tags -> 排序找到最新的 Tag -> 检出
+# 2. 获取并编译 BoringSSL
+# 注意：这里我们手动编译生成 .a 静态库，而不是让 Nginx 去编译它
 RUN git clone https://github.com/google/boringssl.git && \
     cd boringssl && \
-    # 获取最新的 Tag (按版本排序)
-    # 注意：BoringSSL 的 tag 比较杂乱，这里取 git describe 返回的最新 tag
+    # 切换到最新 Tag
     LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1)) && \
-    echo "Detected latest BoringSSL tag: $LATEST_TAG" && \
     git checkout "$LATEST_TAG" && \
-    # 打印当前 Commit Hash 供确认
-    echo "Checked out commit: $(git rev-parse HEAD)"
+    # 创建构建目录
+    mkdir build && \
+    cd build && \
+    # 使用 CMake 编译，生成静态库，且必须开启 -fPIC (Position Independent Code)
+    cmake -GNinja .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON && \
+    ninja
 
 # 3. 获取 Nginx 源码
+ENV NGINX_VERSION=1.25.4
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz && \
     tar -zxC /usr/src -f nginx.tar.gz && \
     rm nginx.tar.gz
@@ -50,12 +54,15 @@ RUN git clone --depth=1 https://github.com/yaoweibin/ngx_http_substitutions_filt
     git clone --recurse-submodules -j2 https://github.com/google/ngx_brotli
 
 # 5. 准备 OCSP Patch
-# 注意：补丁是针对特定版本的，如果 BoringSSL 最新 Tag 变动太大，Patch 可能会失败。
-# 生产环境建议将 Patch 本地保存并 COPY 进去。
-RUN wget https://raw.githubusercontent.com/kn007/patch/refs/heads/master/Enable_BoringSSL_OCSP.patch \
-    -O Enable_BoringSSL_OCSP.patch
+RUN wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch \
+    -O Enable_BoringSSL_OCSP.patch && \
+    echo "c8f2b380482563390c5031448df740e5361093125d0c85c2782e22c83c21743a  Enable_BoringSSL_OCSP.patch" | sha256sum -c -
 
-# 6. 清洗并配置 Nginx
+# 6. 清洗参数并编译 Nginx
+# 关键改动：
+# 1. 移除了 --with-openssl 参数 (防止 Nginx 尝试运行 ./config)
+# 2. 在 cc-opt 中指定 BoringSSL 的头文件路径 (-I)
+# 3. 在 ld-opt 中指定 BoringSSL 的库文件路径 (-L) 并手动链接 ssl 和 crypto
 RUN nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p' \
     | sed -e "s/--with-openssl=[^ ]*//g" \
     | sed -e "s/--with-cc-opt='[^']*'//g" \
@@ -66,14 +73,17 @@ RUN cd /usr/src/nginx-${NGINX_VERSION} && \
     patch -p1 < ../Enable_BoringSSL_OCSP.patch && \
     BASE_CONFIG=$(cat /tmp/nginx_config_base.txt) && \
     ./configure $BASE_CONFIG \
-        --with-cc-opt='-O2 -g -pipe -Wno-error' \
-        --with-ld-opt='-Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now' \
-        --with-openssl=/usr/src/boringssl \
-        --add-module=/usr/src/ngx_http_substitutions_filter_module \
-        --add-module=/usr/src/ngx_brotli \
+        --with-cc-opt="-I/usr/src/boringssl/include -O2 -g -pipe -Wno-error -fPIC" \
+        --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now" \
+        --with-http_ssl_module \
         --with-http_v2_module \
         --with-stream_ssl_preread_module \
+        --add-module=/usr/src/ngx_http_substitutions_filter_module \
+        --add-module=/usr/src/ngx_brotli \
         && \
+    # 修改 Makefile 以链接必要的库
+    # BoringSSL 是 C++ 编写的，且编译出来的 .a 需要链接 pthread 和 stdc++
+    sed -i 's| -lssl -lcrypto | -lssl -lcrypto -lpthread -lstdc++ |g' objs/Makefile && \
     make -j$(getconf _NPROCESSORS_ONLN) && \
     make install
 
@@ -85,10 +95,8 @@ FROM nginx:mainline-alpine
 COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=builder /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
 
-# 运行时库依赖
 RUN apk add --no-cache libstdc++
 
-# 验证
 RUN nginx -V
 
 EXPOSE 80
