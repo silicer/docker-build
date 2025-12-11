@@ -57,9 +57,9 @@ RUN wget https://raw.githubusercontent.com/kn007/patch/refs/heads/master/Enable_
 
 # 6. 清洗并配置 Nginx
 RUN nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p' \
-    | sed -e 's/--with-openssl=[^ ]*//g' \
-    | sed -e 's/--with-cc-opt=[^ ]*//g' \
-    | sed -e 's/--with-ld-opt=[^ ]*//g' \
+    | sed -e "s/--with-openssl=[^ ]*//g" \
+    | sed -e "s/--with-cc-opt='[^']*'//g" \
+    | sed -e "s/--with-ld-opt='[^']*'//g" \
     > /tmp/nginx_config_base.txt
 
 RUN cd /usr/src/nginx-${NGINX_VERSION} && \
