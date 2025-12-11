@@ -55,8 +55,7 @@ RUN git clone --depth=1 https://github.com/yaoweibin/ngx_http_substitutions_filt
 
 # 5. 准备 OCSP Patch
 RUN wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch \
-    -O Enable_BoringSSL_OCSP.patch && \
-    echo "c8f2b380482563390c5031448df740e5361093125d0c85c2782e22c83c21743a  Enable_BoringSSL_OCSP.patch" | sha256sum -c -
+    -O Enable_BoringSSL_OCSP.patch
 
 # 6. 清洗参数并编译 Nginx
 # 关键改动：
