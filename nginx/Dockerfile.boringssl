@@ -28,28 +28,29 @@ RUN apk add --no-cache --virtual .build-deps \
 WORKDIR /usr/src
 
 # 2. 获取并编译 BoringSSL
-# 注意：这里我们手动编译生成 .a 静态库，而不是让 Nginx 去编译它
 RUN git clone https://github.com/google/boringssl.git && \
     cd boringssl && \
-    # 切换到最新 Tag
     LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1)) && \
     git checkout "$LATEST_TAG" && \
-    # 创建构建目录
     mkdir build && \
     cd build && \
-    # 使用 CMake 编译，生成静态库，且必须开启 -fPIC (Position Independent Code)
     cmake -GNinja .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON && \
     ninja && \
-    # 【关键步骤】整理构建产物，方便 Nginx 引用
-    # 将分散的 libssl.a 和 libcrypto.a 汇聚到一个 lib 目录
+    # --- 修复开始 ---
+    # 创建目标目录
     mkdir -p /usr/src/boringssl/.openssl/lib && \
-    cp crypto/libcrypto.a /usr/src/boringssl/.openssl/lib/ && \
-    cp ssl/libssl.a /usr/src/boringssl/.openssl/lib/ && \
-    # 将头文件复制到标准目录
     mkdir -p /usr/src/boringssl/.openssl/include && \
+    # 使用 find 查找 libssl.a 和 libcrypto.a，无论它们在哪里
+    find . -name "libssl.a" -exec cp {} /usr/src/boringssl/.openssl/lib/ \; && \
+    find . -name "libcrypto.a" -exec cp {} /usr/src/boringssl/.openssl/lib/ \; && \
+    # 检查是否真的复制成功 (如果没找到，这里会报错停止，避免后续隐蔽错误)
+    ls -l /usr/src/boringssl/.openssl/lib/libssl.a && \
+    ls -l /usr/src/boringssl/.openssl/lib/libcrypto.a && \
+    # 复制头文件
     cp -r ../include/* /usr/src/boringssl/.openssl/include/
+    # --- 修复结束 ---
 
 # 3. 获取 Nginx 源码
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz && \
