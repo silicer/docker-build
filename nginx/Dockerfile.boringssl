@@ -1,13 +1,10 @@
-# Based on: https://gist.github.com/hermanbanken/96f0ff298c162a522ddbba44cad31081
+# syntax=docker/dockerfile:1
 
 FROM nginx:mainline-alpine AS builder
 
-RUN nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p' > /tmp/nginx_config.txt
-
-RUN NGINX_CONFIG=$(cat /tmp/nginx_config.txt) && \
-    echo "Using nginx configure arguments: $NGINX_CONFIG"
-
-# For latest build deps, see https://github.com/nginxinc/docker-nginx/blob/master/mainline/alpine/Dockerfile
+# 1. 安装构建依赖
+# 新增: go, ninja (编译现代 BoringSSL 必须)
+# 移除: openssl-dev (避免头文件冲突)
 RUN apk add --no-cache --virtual .build-deps \
     alpine-sdk \
     bash \
@@ -16,58 +13,83 @@ RUN apk add --no-cache --virtual .build-deps \
     gcc \
     gd-dev \
     geoip-dev \
+    git \
+    go \
     libc-dev \
     libedit-dev \
     libxslt-dev \
     libxml2-dev \
     linux-headers \
     make \
-    openssl-dev \
+    ninja \
     pcre2-dev \
     perl-dev \
     zlib-dev
 
-RUN mkdir -p /usr/src && \
-    git clone https://boringssl.googlesource.com/boringssl /usr/src/boringssl && \
-    cd /usr/src/boringssl && \
-    (grep -qxF 'SET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' /usr/src/boringssl/crypto/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(crypto PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/crypto/CMakeLists.txt) && \
-    (grep -qxF 'SET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' /usr/src/boringssl/ssl/CMakeLists.txt || echo -e '\nSET_TARGET_PROPERTIES(ssl PROPERTIES SOVERSION 1)' >> /usr/src/boringssl/ssl/CMakeLists.txt) && \
-    mkdir -p /usr/src/boringssl/build && \
-    cmake -B/usr/src/boringssl/build -S/usr/src/boringssl \
-        -DCMAKE_BUILD_TYPE=RelWithDebInfo && \
-    make -C/usr/src/boringssl/build -j$(getconf _NPROCESSORS_ONLN)
+WORKDIR /usr/src
 
+# 2. 获取 BoringSSL 并切换到最新 Tag
+# 逻辑：克隆 -> 获取所有 Tags -> 排序找到最新的 Tag -> 检出
+RUN git clone https://github.com/google/boringssl.git && \
+    cd boringssl && \
+    # 获取最新的 Tag (按版本排序)
+    # 注意：BoringSSL 的 tag 比较杂乱，这里取 git describe 返回的最新 tag
+    LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1)) && \
+    echo "Detected latest BoringSSL tag: $LATEST_TAG" && \
+    git checkout "$LATEST_TAG" && \
+    # 打印当前 Commit Hash 供确认
+    echo "Checked out commit: $(git rev-parse HEAD)"
+
+# 3. 获取 Nginx 源码
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz && \
-    wget https://github.com/yaoweibin/ngx_http_substitutions_filter_module/archive/refs/heads/master.tar.gz -O nginx_substitutions_filter.tar.gz && \
     tar -zxC /usr/src -f nginx.tar.gz && \
-    tar -zxC /usr/src -f nginx_substitutions_filter.tar.gz && \
-    rm nginx.tar.gz && \
-    rm nginx_substitutions_filter.tar.gz && \
-    git clone --recurse-submodules -j2 https://github.com/google/ngx_brotli /usr/src/ngx_brotli && \
-    cd /usr/src/nginx-$NGINX_VERSION && \
-    wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch && \
-    patch -p1 < Enable_BoringSSL_OCSP.patch && \
-    NGINX_CONFIG=$(cat /tmp/nginx_config.txt) && \
-    bash -c "./configure $NGINX_CONFIG \
-        --with-cc=c++ \
-        --with-cc-opt='-I/usr/src/boringssl/include -x c -O2' \
-        --with-ld-opt='-L/usr/src/boringssl/build -lstdc++' \
-        --add-dynamic-module=/usr/src/ngx_http_substitutions_filter_module-master \
-        --add-dynamic-module=/usr/src/ngx_brotli" && \
+    rm nginx.tar.gz
+
+# 4. 获取第三方模块
+RUN git clone --depth=1 https://github.com/yaoweibin/ngx_http_substitutions_filter_module && \
+    git clone --recurse-submodules -j2 https://github.com/google/ngx_brotli
+
+# 5. 准备 OCSP Patch
+# 注意：补丁是针对特定版本的，如果 BoringSSL 最新 Tag 变动太大，Patch 可能会失败。
+# 生产环境建议将 Patch 本地保存并 COPY 进去。
+RUN wget https://raw.githubusercontent.com/kn007/patch/refs/heads/master/Enable_BoringSSL_OCSP.patch \
+    -O Enable_BoringSSL_OCSP.patch
+
+# 6. 清洗并配置 Nginx
+RUN nginx -V 2>&1 | sed -n -e 's/^.*configure arguments: //p' \
+    | sed -e 's/--with-openssl=[^ ]*//g' \
+    | sed -e 's/--with-cc-opt=[^ ]*//g' \
+    | sed -e 's/--with-ld-opt=[^ ]*//g' \
+    > /tmp/nginx_config_base.txt
+
+RUN cd /usr/src/nginx-${NGINX_VERSION} && \
+    patch -p1 < ../Enable_BoringSSL_OCSP.patch && \
+    BASE_CONFIG=$(cat /tmp/nginx_config_base.txt) && \
+    ./configure $BASE_CONFIG \
+        --with-cc-opt='-O2 -g -pipe -Wno-error' \
+        --with-ld-opt='-Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now' \
+        --with-openssl=/usr/src/boringssl \
+        --add-module=/usr/src/ngx_http_substitutions_filter_module \
+        --add-module=/usr/src/ngx_brotli \
+        --with-http_v2_module \
+        --with-stream_ssl_preread_module \
+        && \
     make -j$(getconf _NPROCESSORS_ONLN) && \
     make install && \
-    apk del .build-deps
 
+# -----------------------------------------------------------------------------
+# Final Stage
+# -----------------------------------------------------------------------------
 FROM nginx:mainline-alpine
 
-COPY --from=builder /usr/lib/nginx/modules/* /usr/lib/nginx/modules/
-
 COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
+COPY --from=builder /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
 
-COPY --from=builder /usr/src/boringssl/build/*.so /usr/lib/
+# 运行时库依赖
+RUN apk add --no-cache libstdc++
 
-RUN sed -i '1iload_module /usr/lib/nginx/modules/ngx_http_subs_filter_module.so;\n' /etc/nginx/nginx.conf && \
-    apk add --no-cache --virtual .nginx-rundeps libstdc++
+# 验证
+RUN nginx -V
 
 EXPOSE 80
 STOPSIGNAL SIGTERM
