@@ -44,7 +44,6 @@ RUN git clone https://github.com/google/boringssl.git && \
     ninja
 
 # 3. 获取 Nginx 源码
-ENV NGINX_VERSION=1.25.4
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz && \
     tar -zxC /usr/src -f nginx.tar.gz && \
     rm nginx.tar.gz
@@ -54,7 +53,7 @@ RUN git clone --depth=1 https://github.com/yaoweibin/ngx_http_substitutions_filt
     git clone --recurse-submodules -j2 https://github.com/google/ngx_brotli
 
 # 5. 准备 OCSP Patch
-RUN wget https://raw.githubusercontent.com/kn007/patch/cd03b77647c9bf7179acac0125151a0fbb4ac7c8/Enable_BoringSSL_OCSP.patch \
+RUN wget https://raw.githubusercontent.com/kn007/patch/refs/heads/master/Enable_BoringSSL_OCSP.patch \
     -O Enable_BoringSSL_OCSP.patch
 
 # 6. 清洗参数并编译 Nginx
