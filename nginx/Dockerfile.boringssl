@@ -38,19 +38,6 @@ RUN git clone https://github.com/google/boringssl.git && \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON && \
     ninja && \
-    # --- 修复开始 ---
-    # 创建目标目录
-    mkdir -p /usr/src/boringssl/.openssl/lib && \
-    mkdir -p /usr/src/boringssl/.openssl/include && \
-    # 使用 find 查找 libssl.a 和 libcrypto.a，无论它们在哪里
-    find . -name "libssl.a" -exec cp {} /usr/src/boringssl/.openssl/lib/ \; && \
-    find . -name "libcrypto.a" -exec cp {} /usr/src/boringssl/.openssl/lib/ \; && \
-    # 检查是否真的复制成功 (如果没找到，这里会报错停止，避免后续隐蔽错误)
-    ls -l /usr/src/boringssl/.openssl/lib/libssl.a && \
-    ls -l /usr/src/boringssl/.openssl/lib/libcrypto.a && \
-    # 复制头文件
-    cp -r ../include/* /usr/src/boringssl/.openssl/include/
-    # --- 修复结束 ---
 
 # 3. 获取 Nginx 源码
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz && \
@@ -80,8 +67,10 @@ RUN cd /usr/src/nginx-${NGINX_VERSION} && \
     patch -p1 < ../Enable_BoringSSL_OCSP.patch && \
     BASE_CONFIG=$(cat /tmp/nginx_config_base.txt) && \
     ./configure $BASE_CONFIG \
-        --with-cc-opt="-I/usr/src/boringssl/.openssl/include -O2 -g -pipe -Wno-error -fPIC" \
-        --with-ld-opt="-L/usr/src/boringssl/.openssl/lib -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -lstdc++ -lpthread" \
+        --with-openssl=/usr/src/boringssl \
+        --with-openssl-opt=nobuild \
+        --with-cc-opt="-I/usr/src/boringssl/include -O2 -g -pipe -Wno-error -fPIC" \
+        --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -lstdc++ -lpthread" \
         --with-http_ssl_module \
         --with-http_v2_module \
         --with-stream_ssl_preread_module \
