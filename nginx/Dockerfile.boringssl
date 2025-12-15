@@ -28,21 +28,49 @@ RUN apk add --no-cache --virtual .build-deps \
 WORKDIR /usr/src
 
 # 2. 获取并编译 BoringSSL
-RUN git clone https://github.com/google/boringssl.git && \
-    cd boringssl && \
-    LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1)) && \
-    git checkout "$LATEST_TAG" && \
-    mkdir build && \
-    cd build && \
+RUN set -eux; \
+    git clone https://github.com/google/boringssl.git; \
+    cd boringssl; \
+    LATEST_TAG="$(git describe --tags $(git rev-list --tags --max-count=1))"; \
+    git checkout "$LATEST_TAG"; \
+    mkdir -p build; \
+    cd build; \
     cmake -GNinja .. \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_POSITION_INDEPENDENT_CODE=ON && \
-    ninja && \
-    # HACK: Nginx 1.29.4's build script has a bug where it ignores "nobuild"
-    # and still checks for OpenSSL's directory structure. We create the
-    # expected path to satisfy the broken dependency check in the Makefile.
-    mkdir -p /usr/src/boringssl/.openssl/include && \
-    cp -r /usr/src/boringssl/include/* /usr/src/boringssl/.openssl/include/
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON; \
+    ninja; \
+    printf '%s\n' \
+      '#!/bin/sh' \
+      'set -eu' \
+      '' \
+      'prefix=""' \
+      'for arg in "$@"; do' \
+      '  case "$arg" in' \
+      '    --prefix=*) prefix="${arg#--prefix=}" ;;' \
+      '  esac' \
+      'done' \
+      '' \
+      ': "${prefix:?missing --prefix=...}"' \
+      '' \
+      'cat > Makefile <<EOF2' \
+      '.RECIPEPREFIX := >' \
+      'PREFIX := ${prefix}' \
+      'LIBDIR ?= lib' \
+      '' \
+      'all:' \
+      '>@true' \
+      '' \
+      'clean:' \
+      '>@true' \
+      '' \
+      'install_sw:' \
+      '>mkdir -p \$(PREFIX)/include \$(PREFIX)/\$(LIBDIR)' \
+      '>cp -R include/* \$(PREFIX)/include/' \
+      '>cp build/ssl/libssl.a \$(PREFIX)/\$(LIBDIR)/' \
+      '>cp build/crypto/libcrypto.a \$(PREFIX)/\$(LIBDIR)/' \
+      'EOF2' \
+      > ../config; \
+    chmod +x ../config
 
 # 3. 获取 Nginx 源码
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz && \
@@ -73,9 +101,9 @@ RUN cd /usr/src/nginx-${NGINX_VERSION} && \
     BASE_CONFIG=$(cat /tmp/nginx_config_base.txt) && \
     ./configure $BASE_CONFIG \
         --with-openssl=/usr/src/boringssl \
-        --with-openssl-opt=nobuild \
+        --with-openssl-opt="no-shared no-threads" \
         --with-cc-opt="-I/usr/src/boringssl/include -O2 -g -pipe -Wno-error -fPIC" \
-        --with-ld-opt="-L/usr/src/boringssl/build/ssl -L/usr/src/boringssl/build/crypto -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -lstdc++ -lpthread" \
+        --with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -lstdc++ -lpthread" \
         --with-http_ssl_module \
         --with-http_v2_module \
         --with-stream_ssl_preread_module \
