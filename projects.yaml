@@ -43,9 +43,10 @@ projects:
   - name: nginx
     enabled: true
     push: true
-    platforms: linux/amd64,linux/arm/v7,linux/arm64/v8,linux/riscv64
+    platforms: linux/amd64,linux/arm64/v8
     repo_url: library/nginx
     label: mainline-alpine
     check_type: docker_hub
     event_type: build_docker
     docker_file_path: ./nginx/Dockerfile.boringssl
+
