@@ -38,39 +38,7 @@ RUN set -eux; \
     cmake -GNinja .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON; \
-    ninja; \
-    printf '%s\n' \
-      '#!/bin/sh' \
-      'set -eu' \
-      '' \
-      'prefix=""' \
-      'for arg in "$@"; do' \
-      '  case "$arg" in' \
-      '    --prefix=*) prefix="${arg#--prefix=}" ;;' \
-      '  esac' \
-      'done' \
-      '' \
-      ': "${prefix:?missing --prefix=...}"' \
-      '' \
-      'cat > Makefile <<EOF2' \
-      '.RECIPEPREFIX := >' \
-      'PREFIX := ${prefix}' \
-      'LIBDIR ?= lib' \
-      '' \
-      'all:' \
-      '>@true' \
-      '' \
-      'clean:' \
-      '>@true' \
-      '' \
-      'install_sw:' \
-      '>mkdir -p \$(PREFIX)/include \$(PREFIX)/\$(LIBDIR)' \
-      '>cp -R include/* \$(PREFIX)/include/' \
-      '>cp build/ssl/libssl.a \$(PREFIX)/\$(LIBDIR)/' \
-      '>cp build/crypto/libcrypto.a \$(PREFIX)/\$(LIBDIR)/' \
-      'EOF2' \
-      > ../config; \
-    chmod +x ../config
+    ninja
 
 # 3. 获取 Nginx 源码
 RUN wget https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz -O nginx.tar.gz && \
@@ -100,13 +68,9 @@ RUN cd /usr/src/nginx-${NGINX_VERSION} && \
     patch -p1 < ../Enable_BoringSSL_OCSP.patch && \
     BASE_CONFIG=$(cat /tmp/nginx_config_base.txt) && \
     ./configure $BASE_CONFIG \
-        --with-openssl=/usr/src/boringssl \
-        --with-openssl-opt="no-shared no-threads" \
-        --with-cc-opt="-I/usr/src/boringssl/include -O2 -g -pipe -Wno-error -fPIC" \
-        --with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -lstdc++ -lpthread" \
-        --with-http_ssl_module \
-        --with-http_v2_module \
-        --with-stream_ssl_preread_module \
+        --with-cc=c++ \
+        --with-cc-opt="-I/usr/src/boringssl/include -O2 -g -pipe -Wno-error -fPIC -x c" \
+        --with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -L/usr/src/boringssl/build -lssl -lcrypto -lstdc++ -lpthread" \
         --add-module=/usr/src/ngx_http_substitutions_filter_module \
         --add-module=/usr/src/ngx_brotli \
         && \
