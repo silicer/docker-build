@@ -83,7 +83,7 @@ RUN cd /usr/src/nginx-${NGINX_VERSION} && \
 FROM nginx:mainline-alpine
 
 COPY --from=builder /usr/sbin/nginx /usr/sbin/nginx
-COPY --from=builder /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
+COPY --from=builder /usr/lib/nginx/modules/* /usr/lib/nginx/modules/
 
 RUN apk add --no-cache libstdc++
 
