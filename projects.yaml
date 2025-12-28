@@ -38,7 +38,7 @@ projects:
     enabled: true
     push: true
     repo_url: https://github.com/Toperlock/sing-box-subscribe
-    check_type: github_release
+    check_type: github_commit
     event_type: build_docker
   - name: nginx
     enabled: true
@@ -49,4 +49,5 @@ projects:
     check_type: docker_hub
     event_type: build_docker
     docker_file_path: ./nginx/Dockerfile.boringssl
+
 
